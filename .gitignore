@@ -1,0 +1,40 @@
+# Laravel & PHP
+/vendor
+/node_modules
+.phpunit.result.cache
+.env
+.env.*
+storage/*.key
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+
+# Laravel Telescope
+telescope
+
+# Composer
+composer.lock
+
+# NPM / Yarn / PNPM
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editors
+.idea
+.vscode
+*.swp
+*.swo
+
+# Other
+/public/hot
+/public/storage
+/public/build
+npm-debug.log
+yarn-error.log

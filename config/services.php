@@ -14,6 +14,19 @@ return [
     |
     */
 
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'sumsub' => [
+        'app_token'   => env('SUMSUB_APP_TOKEN'),
+        'secret_key'  => env('SUMSUB_SECRET_KEY'),
+        'level_name'  => env('SUMSUB_LEVEL_NAME', 'basic-kyc-level'),
+        'level_name_KYB'  => env('SUMSUB_LEVEL_NAME_KYB', 'basic-kyc-level'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],

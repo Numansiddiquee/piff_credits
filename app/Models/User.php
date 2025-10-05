@@ -6,11 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable,HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -18,10 +19,19 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'fname',
+        'lname',
+        'phone',
         'name',
+        'company_name',
+        'company_id',
         'email',
         'password',
+        'plain_hash',
+        'login_type',
+        'user_type'
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -45,4 +55,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
 }

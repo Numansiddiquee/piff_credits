@@ -62,7 +62,7 @@
                                     <tr style="border-bottom: 1px solid;">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <a href="{{ route('admin.item.show',$item->id) }}" class="symbol symbol-50px">
+                                                <a href="{{ route('freelancer.item.show',$item->id) }}" class="symbol symbol-50px">
                                                     <span class="symbol-label" style="background-image:url({{ Storage::url('images/'.$item->item->image)}});"></span>
                                                 </a>
                                                 <div class="ms-5">

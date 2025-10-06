@@ -29,7 +29,6 @@
 
                     <div class="d-none align-items-center border-bottom px-8 min-h-50px emailCc">
                         <div class="text-gray-900 fw-bold w-75px">Cc:</div>
-{{--                        <input type="text" class="form-control form-control-transparent border-0" name="cc_email" placeholder="Cc email" />--}}
                         <select class="form-select form-control-transparent border-0 select2" name="cc_email[]" data-control="select2" data-placeholder="Recipient email" data-allow-clear="true" multiple="multiple">
                             <option></option>
                             
@@ -38,7 +37,6 @@
 
                     <div class="d-none align-items-center border-bottom px-8 min-h-50px emailBcc">
                         <div class="text-gray-900 fw-bold w-75px">Bcc:</div>
-{{--                        <input type="text" class="form-control form-control-transparent border-0" name="bcc_email" placeholder="Bcc email" />--}}
                         <select class="form-select form-control-transparent border-0 select2" name="bcc_email[]" data-control="select2" data-placeholder="Recipient email" data-allow-clear="true" multiple="multiple">
                             <option></option>
                             
@@ -46,7 +44,7 @@
                     </div>
 
                     <div class="border-bottom px-8">
-                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Invoice - {{$invoice->invoice_number}} from {{ auth()->user()->company_name }}"/>
+                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Invoice - {{$invoice->invoice_number}} from {{ auth()->user()->name }}"/>
                     </div>
                     <div class="px-8 round-5 border">
                         <div class="text-gray-900 fw-bold w-75px mt-3 mb-2">Email Body</div>
@@ -54,7 +52,6 @@
                         <input type="hidden" name="model_type" value="App\Models\Invoice">
                         <input type="hidden" name="model_id" value="{{ $id }}">
                         <input type="hidden" name="source" value="Main Email">
-{{--                        <div id="invoiceContent" class="invoice-container editable" contenteditable="true">--}}
                         <textarea id="emailEditor">
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #fbfbfb;">
                                 <tr>

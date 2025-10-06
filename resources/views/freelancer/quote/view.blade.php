@@ -1,6 +1,5 @@
-@extends('admin.layout.main')
-
-@section('css')
+@extends('layouts.custom.freelancer')
+@section('freelancer-css')
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
 
     <style>
@@ -25,47 +24,19 @@
     </style>
 @endsection
 
-@section('content')
+@section('freelancer-content')
     <div id="kt_app_content_container" class="app-container container-fluid">
         <!--begin::Layout-->
         <div class="d-flex flex-column flex-xl-row">
             <div class="flex-column flex-lg-row-auto w-100 w-xl-300px mb-10 me-5">
                 <div class="card mb-5 mb-xl-8">
                     <div class="card-header-lg p-4 bg-light">
-                        <a href="#" class="btn btn-active-color-gray-900-100 btn-sm " data-kt-menu-trigger="click"
-                           data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">All Quotes
-                            <i class="ki-outline ki-down fs-2 me-0"></i></a>
-                        <div
-                            class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-semibold py-4 w-250px fs-6"
-                            data-kt-menu="true">
-                            <!--begin::Menu item-->
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">All</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Draft</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Sent</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Customer Viewed</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Accepted</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Invoiced</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Declined</div>
-                            </div>
-                            <div class="menu-item px-5">
-                                <div class="menu-link px-5">Expired</div>
-                            </div>
-                        </div>
-                        <a href="{{route('admin.quote.new_quote')}}" class="btn btn-primary btn-sm float-end">+
-                            New</a>
+                        <a href="#" class="btn btn-active-color-gray-900-100 btn-sm " data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+                            All Quotes
+                       </a>
+                        <a href="{{route('freelancer.quote.new_quote')}}" class="btn btn-primary btn-sm float-end">
+                            + New
+                        </a>
                     </div>
 
                     <div class="card-body pt-3 p-5">
@@ -78,21 +49,27 @@
                         <!--begin::Card body-->
                         <div class="separator separator-solid my-3"></div>
                         <!--begin::Summary-->
-
-
-                        {{--                            <div class="separator separator-dashed my-3"></div>--}}
                         @foreach($quotes as $quote)
-                            <div
-                                class="d-flex justify-content-between rounded quote-div py-3 px-3 mb-3 @if($quote->id == $current_quote->id) activeDiv @endif"
+                            @php
+                                $statusClasses = [
+                                    'Draft'       => 'badge badge-secondary',
+                                    'Accepted'    => 'badge badge-success',
+                                    'Rejected'    => 'badge badge-danger',
+                                    'Not Answered'=> 'badge badge-warning',
+                                ];
+
+                                $statusClass = $statusClasses[$quote->status] ?? 'badge badge-light';
+                            @endphp
+
+                            <div class="d-flex justify-content-between rounded quote-div py-3 px-3 mb-3 @if($quote->id == $current_quote->id) activeDiv @endif"
                                 id="quote-{{$quote->id}}"
                                 onclick="loadQuote('{{$quote->id}}')" role="button"
                                 style="box-shadow: 0px 7px 15px rgba(0, 0, 0, 0.1)">
                                 <div class="d-flex flex-column fs-4 fw-bold text-gray-700">
-                                    <b class="fw-bold">{{ $quote->customer->first_name.' '.$quote->customer->last_name }}</b>
+                                    <b class="fw-bold">{{ $quote->client->name }}</b>
                                     <span
-                                        class="text-muted fs-8 mt-1 mb-2">{{$quote->quote_id.' . '.date('Y-m-d',strtotime($quote->quote_date))}}</span>
-                                    <span class="badge  w-auto"> Draft
-                                        </span>
+                                        class="text-muted fs-8 mt-1 mb-2">{{$quote->quote_number.' . '.date('Y-m-d',strtotime($quote->quote_date))}}</span>
+                                    <span class="{{ $statusClass }}  w-auto"> {{ $quote->status }} </span>
                                 </div>
                                 <div class="fw-bold">${{number_format($quote->grand_total,2)}}</div>
                             </div>
@@ -103,8 +80,7 @@
             </div>
             <!--begin::Content-->
             <div class="flex-lg-row-fluid ms-0 card rounded" id="quote_detail">
-                @include('admin.quote.ajax_views.details_render')
-                {{--                    @include('admin.partials.quotes.comments_drawer')--}}
+                @include('freelancer.quote.ajax_views.details_render')
             </div>
         </div>
     </div>
@@ -112,33 +88,31 @@
 
 @endsection
 
-@section('js')
-
+@section('freelancer-js')
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
-    <script src="{{ asset('assets/js/custom/apps/inbox/compose_new.js') }}"></script>
+    <script src="{{ asset('metronic/assets/js/custom/apps/inbox/compose_new.js') }}"></script>
     <script>
         $(document).ready(function () {
             $(document).on('click', '#add_comment', function () {
                 let comment = $("#comment_text").val();
-                let customer_id = $("#customer_id").val();
+                let client_id = $("#client_id").val();
                 let quote_id = $("#quote_id").val();
                 $.ajax({
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Fetch CSRF token
                     },
-                    url: '{{ route("admin.quote.add_comment") }}', // Replace with your route
+                    url: '{{ route("freelancer.quote.add_comment") }}', // Replace with your route
                     method: 'POST',
                     data: {
-                        'customer_id': customer_id,
+                        'client_id': client_id,
                         'quote_id': quote_id,
                         'comment': comment
                     }, // Serialize form data
                     success: function (response) {
-                        console.log("customer data", response)
                         const contactComments = document.querySelector('#quote_comments');
                         contactComments.innerHTML = response.all_comments;
                         $('#comment_text').val('');
-                        toast_msg('success', 'Saved', 'Comment Saved Successfully');
+                        toastr.success('success', 'Comment Saved Successfully');
                     },
                     error: function (xhr, status, error) {
                         alert('An error occurred: ' + xhr.responseText);
@@ -160,7 +134,7 @@
         function loadQuote(quote_id) {
             $('#loader').show();
             $.ajax({
-                url: "{{ route('admin.quote.render') }}",
+                url: "{{ route('freelancer.quote.render') }}",
                 type: 'POST',
                 data:
                     {
@@ -207,7 +181,7 @@
                 let formData = new FormData(this);
 
                 $.ajax({
-                    url: '{{ route('admin.quote.attachments.upload') }}',
+                    url: "{{ route('freelancer.quote.attachments.upload') }}",
                     method: 'POST',
                     data: formData,
                     contentType: false,
@@ -224,7 +198,7 @@
             });
 
             function loadAttachments(quote_id) {
-                let url = "{{ route('admin.quote.attachments.list', ['quote' => ':id']) }}";
+                let url = "{{ route('freelancer.quote.attachments.list', ['quote' => ':id']) }}";
                 url = url.replace(':id', quote_id);
 
                 $.get(url, function (data) {
@@ -235,7 +209,6 @@
         });
     </script>
     <script>
-{{--email render--}}
         $(document).ready(function() {
             $('#emailEditor').summernote({
                 height: 400,
@@ -269,12 +242,4 @@
             });
         });
     </script>
-
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/add-payment.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/adjust-balance.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/invoices.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/payment-method.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/payment-table.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/view/statement.js') }}"></script>--}}
-    {{--    <script src="{{ asset('assets/js/custom/apps/customers/update.js') }}"></script>--}}
 @endsection

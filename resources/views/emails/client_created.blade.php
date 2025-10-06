@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your 2FA Code</title>
+    <title>Your Account Has Been Created</title>
     <style>
-        /* Base styles for email clients */
         body {
             margin: 0;
             padding: 0;
@@ -42,24 +41,6 @@
             padding: 30px;
             text-align: center;
         }
-        .code {
-            font-size: 32px;
-            font-weight: bold;
-            color: #009EF7;
-            letter-spacing: 4px;
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #F5F8FA;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        .footer {
-            background-color: #F5F8FA;
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #6B7280;
-        }
         .button {
             display: inline-block;
             padding: 12px 24px;
@@ -73,17 +54,27 @@
         .button:hover {
             background-color: #007BCE;
         }
+        .details {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #F5F8FA;
+            border-radius: 4px;
+        }
+        .details p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .footer {
+            background-color: #F5F8FA;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6B7280;
+        }
         @media only screen and (max-width: 600px) {
-            .container {
-                margin: 10px;
-                border-radius: 4px;
-            }
-            .content {
-                padding: 20px;
-            }
-            .code {
-                font-size: 28px;
-            }
+            .container { margin: 10px; border-radius: 4px; }
+            .content { padding: 20px; }
         }
     </style>
 </head>
@@ -95,25 +86,29 @@
                     <!-- Header -->
                     <tr>
                         <td class="header"> 
-                            <img src="{{ Storage::url(setting('platform_logo')) }}" alt="Your App Logo" style="max-width: 150px; height: auto;" />
+                            <img src="{{ Storage::url(setting('platform_logo')) }}" alt="Your App Logo" />
                         </td>
                     </tr>
                     <!-- Content -->
                     <tr>
                         <td class="content">
-                            <h1 style="font-size: 24px; font-weight: 600; color: #1A1A1A; margin: 0 0 10px;">Two-Factor Authentication Code</h1>
-                            <p style="font-size: 16px; color: #6B7280; margin: 0 0 20px;">Hello,</p>
-                            <p style="font-size: 16px; color: #1A1A1A; margin: 0 0 20px;">Please use the following 6-digit code to complete your two-factor authentication. This code will expire in 10 minutes.</p>
-                            <div class="code">{{ $code }}</div>
-                            <p style="font-size: 14px; color: #6B7280; margin: 20px 0;">If you didn’t request this code, please ignore this email or <a href="#" style="color: #009EF7;">contact support</a>.</p>
-                            <a href="{{ route('verify.2fa') }}" class="button">Verify Now</a>
+                            <h1 style="font-size: 24px; font-weight: 600; color: #1A1A1A; margin: 0 0 10px;">Welcome {{ $user->name }}</h1>
+                            <p style="font-size: 16px; color: #6B7280; margin: 0 0 20px;">A freelancer has created an account for you on our portal.</p>
+
+                            <div class="details">
+                                <p><strong>Email:</strong> {{ $user->email }}</p>
+                                <p><strong>Temporary Password:</strong> {{ $temporaryPassword }}</p>
+                            </div>
+
+                            <p style="font-size: 16px; color: #1A1A1A;">Please click the button below to login and complete your profile information:</p>
+                            <a href="{{ route('login') }}" class="button">Login Now</a>
                         </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
                         <td class="footer">
-                            <p style="margin: 0;">&copy; {{ date('Y') }} Your App Name. All rights reserved.</p>
-                            <p style="margin: 5px 0 0;">
+                            <p>&copy; {{ date('Y') }} Your App Name. All rights reserved.</p>
+                            <p>
                                 <a href="#" style="color: #009EF7;">Privacy Policy</a> | 
                                 <a href="#" style="color: #009EF7;">Terms of Service</a>
                             </p>

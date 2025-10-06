@@ -45,7 +45,7 @@
 
                     <!-- Subject -->
                     <div class="border-bottom px-8">
-                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Invoice - {{$invoice->invoice_number}} reminder from {{ auth()->user()->company_name }}"/>
+                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Invoice - {{$invoice->invoice_number}} reminder from {{ auth()->user()->name }}"/>
                     </div>
                     <div class="px-8 round-5 border">
                         <div class="text-gray-900 fw-bold w-75px mt-3">Email Body</div>

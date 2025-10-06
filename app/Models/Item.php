@@ -13,4 +13,9 @@ class Item extends Model
     {
         return $this->hasOne(Company::class,'id','company_id');
     }
+
+    public function invoice()
+    {
+        return $this->hasMany(InvoiceItem::class,'item_id','id');
+    }
 }

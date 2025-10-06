@@ -260,7 +260,7 @@
                                 </table>
                                 <div class="separator separator-dashed my-5"></div>
                                 <div class="row">
-                                    <div class="col-md-5">
+                                    <div class="col-md-6">
                                         <div class="d-flex flex-column justify-content-between" style="height:198px">
                                             <div class="row">
                                                 <div class="d-flex gap-4">
@@ -277,7 +277,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-7">
+                                    <div class="col-md-6">
                                         <div class="card bg-light">
                                             <div class="card-body">
                                                 <div class="row ">
@@ -367,7 +367,7 @@
                     </div>
                     <div class="col-md-4">
                         <label for="" class="fs-6 fw-semibold mb-2">Attach Files to Quote</label>
-                        <input type="file" class="form-control form-control-sm" name="documents" id="documents">
+                        <input type="file" class="form-control form-control-sm" name="attachments[]" id="documents" multiple>
                     </div>
                 </div>
                 <div class="separator my-5"></div>
@@ -520,7 +520,7 @@
             $('#client-select').on('change', function () {
                 if ($(this).val() === "new_client") {
                     $(this).val(null).trigger('change'); // Reset the select
-                    window.location.href = "{{ route('freelancer.invoice.create_client') }}";
+                    window.location.href = "{{ route('freelancer.client.create_client') }}";
                 } 
             });
         });

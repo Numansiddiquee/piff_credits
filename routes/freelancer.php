@@ -6,14 +6,15 @@ use App\Http\Controllers\Freelancer\DashboardController;
 use App\Http\Controllers\Freelancer\ItemController;
 use App\Http\Controllers\Freelancer\QuoteController;
 use App\Http\Controllers\Freelancer\InvoiceController;
+use App\Http\Controllers\Freelancer\ClientController;
 use App\Http\Controllers\Freelancer\SettingController;
 use App\Http\Controllers\Freelancer\VerificationRequestController;
 
 
-Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
-    Route::get('/freelancer/dashboard', [DashboardController::class, 'index'])->name('freelancer.dashboard');
+Route::prefix('freelancer')->middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('freelancer.dashboard');
 
-    Route::prefix('freelancer')->name('freelancer.')->group(function () {
+    Route::name('freelancer.')->group(function () {
         Route::get('/items', [DashboardController::class, 'items'])->name('items');
         Route::get('/quotes', [DashboardController::class, 'quotes'])->name('quotes');
         Route::get('/invoices', [DashboardController::class, 'invoices'])->name('invoices');
@@ -24,7 +25,7 @@ Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
         Route::get('/transaction-history', [DashboardController::class, 'transactionHistory'])->name('transaction-history');
         Route::get('/reports', [DashboardController::class, 'reports'])->name('reports');
         Route::get('/accounting', [DashboardController::class, 'accounting'])->name('accounting');
-        Route::get('/clients', [DashboardController::class, 'clients'])->name('clients');
+        Route::get('/clients-management', [DashboardController::class, 'clients'])->name('clients');
         Route::get('/support', [DashboardController::class, 'support'])->name('support');
     });
 
@@ -50,7 +51,7 @@ Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
         Route::get('/download/pdf/{id}', [QuoteController::class, 'generatePDF'])->name('generatePDF');
 
         Route::post('/getCustomerProjectsAndContacts', [QuoteController::class, 'getCustomerProjectsAndContacts'])->name('getCustomerProjectsAndContacts');
-        
+
         Route::post('/quote_number_settings', [QuoteController::class, 'updateSettings'])->name('quote_number_settings');
         Route::post('/attachments/upload', [QuoteController::class, 'uploadInvoiceAttachment'])->name('attachments.upload');
         Route::get('/{quote}/attachments/list', [QuoteController::class, 'listAttachments'])->name('attachments.list');
@@ -66,9 +67,6 @@ Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
         Route::get('/detail/{invoice}', [InvoiceController::class, 'show'])->name('show');
         Route::post('/detail/render', [InvoiceController::class, 'render'])->name('render');
 
-        Route::get('create/client',[InvoiceController::class,'createClient'])->name('create_client');
-        Route::post('store/client',[InvoiceController::class,'storeClient'])->name('store_client');
-
         Route::post('/invoice-number-settings', [InvoiceController::class, 'updateSettings'])->name('invoice_number_settings');
         Route::get('/clone/{invoice}', [InvoiceController::class, 'clone'])->name('clone');
         Route::post('/stop-reminder', [InvoiceController::class, 'stopReminder'])->name('stopReminder');
@@ -82,7 +80,10 @@ Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
         Route::get('/{invoice}/attachments/list', [InvoiceController::class, 'listAttachments'])->name('attachments.list');
     });
 
-
+    Route::group(['prefix' => 'clients-management', 'as' => 'freelancer.client.'], function(){
+        Route::get('create/client',[ClientController::class,'createClient'])->name('create_client');
+        Route::post('store/client',[ClientController::class,'storeClient'])->name('store_client');
+    });
 
     // For later use
     Route::group(['prefix' => 'payments_received', 'as' => 'freelancer.payments_received.'], function () {
@@ -123,3 +124,9 @@ Route::middleware(['auth', 'role:Freelancer','2fa'])->group(function () {
     });
 
 });
+
+
+// Quotes accept or reject
+Route::get('/quotes/accept/{hash}', [QuoteController::class, 'acceptQuote'])->name('quotes.accept');
+Route::get('/quotes/reject/{hash}', [QuoteController::class, 'rejectQuote'])->name('quotes.reject');
+Route::get('/quotes/status/{hash}', [QuoteController::class, 'showQuoteStatus'])->name('quotes.status');

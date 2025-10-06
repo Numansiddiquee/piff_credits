@@ -73,7 +73,7 @@
 	                                <span class="text-gray-600 fs-6">{{ $invoice->invoice_number }}</span>
 	                            </td>
 	                            <td>
-	                                <span class="text-gray-600 fs-6">{{ $invoice->client->name }}</span>
+	                                <span class="text-gray-600 fs-6">{{ $invoice->client->name ?? '-'}}</span>
 	                            </td>
 
 	                            <td>

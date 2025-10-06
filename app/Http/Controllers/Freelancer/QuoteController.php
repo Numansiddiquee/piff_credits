@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Freelancer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Customer;
-use App\Models\CustomerAddress;
-use App\Models\CustomerContactPerson;
+use App\Models\FreelancerClient;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Item;
@@ -128,6 +126,20 @@ class QuoteController extends Controller
             'grand_total' => $grandTotal,
         ]);
 
+        $connection = FreelancerClient::where('freelancer_id', Auth::id())
+                                        ->where('client_id', $request->client_id)
+                                        ->first();
+
+        if (!$connection) {
+            // No connection yet → create as pending
+            $connection = FreelancerClient::create([
+                'freelancer_id' => Auth::id(),
+                'client_id'     => $request->client_id,
+                'status'        => 'pending',
+                'connected_at'  => null,
+            ]);
+        } 
+
         // Logging
         $log_title = "Quote Added";
         $log_text = "New Quote: $newQuote->quote_id created for $$grandTotal";
@@ -149,100 +161,118 @@ class QuoteController extends Controller
 
     public function edit_quote($id)
     {
-        $customers = Customer::where('company_id', Auth::user()->company_id)->get();
-        $items = Item::where('company_id', Auth::user()->company_id)->get();
-        $quote = Quote::find($id);
-        $projects = Project::where('customer_id', $quote->customer_id)->get();
-        $quoteItems = QuoteItem::where('quote_id', $quote->id)->get();
-        $quoteSetting = QuoteNumberSetting::where('company_id', Auth::user()->company_id)->first();
-        return view('admin.quote.edit', compact('customers', 'quote', 'items', 'projects', 'quoteItems', 'quoteSetting'));
+        $clients        = User::role('client')->get();
+        $items          = Item::where('user_id', Auth::user()->id)->get();
+        $quote          = Quote::find($id);
+        $quoteItems     = QuoteItem::where('quote_id', $quote->id)->get();
+        $quoteSetting   = QuoteNumberSetting::where('user_id', Auth::user()->id)->first();
+
+        return view('freelancer.quote.edit', compact('clients', 'quote', 'items', 'quoteItems', 'quoteSetting'));
     }
 
     public function update_quote(Request $request)
     {
-//        dd($request->all());
-        $updateQuote = Quote::find($request->id);
-        $updateQuote->customer_id = $request->customer_id;
-        $updateQuote->quote_id = $request->quote_id;
-        $updateQuote->reference = $request->reference;
-        $updateQuote->quote_date = date('Y-m-d', strtotime($request->quote_date));
-        $updateQuote->expiry_date = date('Y-m-d', strtotime($request->expiry_date));
-        $updateQuote->sales_person = $request->sales_person;
-        $updateQuote->project_id = $request->project;
-        $updateQuote->subject = $request->subject;
-        $updateQuote->customer_notes = $request->customer_notes;
-        $updateQuote->subtotal = $request->sub_total;
-        $updateQuote->discount_type = $request->discount_type;
-        $updateQuote->discount_value = $request->discount_value;
-        $updateQuote->total_discount = $request->total_discount;
-        $updateQuote->shipping_charges = $request->shipping_charges;
-        $updateQuote->adjustment_field = $request->adjustment_field;
-        $updateQuote->adjustment_value = $request->adjustment_value;
-        $updateQuote->grand_total = $request->grand_total;
+        // return $request;
+        $updateQuote = Quote::findOrFail($request->quote_id);
+
+        $updateQuote->client_id           = $request->client_id;
+        $updateQuote->quote_number        = $request->quote_number;
+        $updateQuote->reference           = $request->reference;
+        $updateQuote->quote_date          = date('Y-m-d', strtotime($request->quote_date));
+        $updateQuote->expiry_date         = date('Y-m-d', strtotime($request->expiry_date));
+        $updateQuote->subject             = $request->subject;
+        $updateQuote->client_notes        = $request->notes;
+        $updateQuote->discount_type       = $request->discount_type;
+        $updateQuote->discount_value      = $request->discount_value;
         $updateQuote->terms_and_conditions = $request->terms_and_conditions;
-        $updateQuote->status = "Draft";
-        $updateQuote->update();
-//        return redirect()->back();
-        foreach ($request->items_repeater as $item) {
-            if (array_key_exists('quote_item_id', $item)) {
-                $updateQuoteItem = QuoteItem::find($item['quote_item_id']);
-                if (array_key_exists('item_id', $item)) {
-                    $updateQuoteItem->item_id = $item['item_id'];
-                }
-                $updateQuoteItem->item_description = $item['item_desc'];
-                $updateQuoteItem->item_qty = $item['item_qty'];
-                $updateQuoteItem->item_rate = $item['item_rate'];
-                $updateQuoteItem->item_amount = $item['item_total'];
-                $updateQuoteItem->update();
-            } else {
-                $quoteItem = new QuoteItem();
-                $quoteItem->unique_id = "234";
-                $quoteItem->user_id = Auth::user()->id;
-                $quoteItem->company_id = Auth::user()->company_id;
-                $quoteItem->customer_id = $request->customer_id;
-                $quoteItem->quote_id = $updateQuote->id;
-                if (array_key_exists('item_id', $item)) {
-                    $quoteItem->item_id = $item['item_id'];
-                }
-                $quoteItem->item_description = $item['item_desc'];
-                $quoteItem->item_qty = $item['item_qty'];
-                $quoteItem->item_rate = $item['item_rate'];
-                $quoteItem->item_amount = $item['item_total'];
-                $quoteItem->save();
+        $updateQuote->status              = "Draft";
+        $updateQuote->save();
+
+        // Remove all existing items
+        $updateQuote->items()->delete();
+
+        $subtotal = 0;
+
+        // Handle attachments
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('invoices/attachments', $filename, 'public');
+
+                $updateQuote->attachments()->create([
+                    'file_name'   => $filename,
+                    'file_path'   => $path,
+                    'file_type'   => $file->getClientOriginalExtension(),
+                    'uploaded_by' => auth()->id(),
+                ]);
             }
         }
-//        Email communication pending
-//        return redirect()->back();
-//        foreach ($request->email_communications as $key => $value) {
-//            $quoteCommunication = new QuoteCommunications();
-//            $quoteCommunication->unique_id = "234";
-//            $quoteCommunication->user_id = Auth::user()->id;
-//            $quoteCommunication->company_id = Auth::user()->company_id;
-//            $quoteCommunication->customer_id = $request->customer_id;
-//            $quoteCommunication->quote_id = $newQuote->id;
-//            $quoteCommunication->contact_person_id = $value;
-//            $quoteCommunication->communication_type = "email";
-//            $quoteCommunication->save();
-//        }
 
+        // Handle items
+        foreach ($request->name as $index => $name) {
+            $quantity = $request->quantity[$index];
+            $id = $request->id[$index];
+            $price = $request->price[$index];
+            $description = $request->description[$index] ?? '';
+            $total       = $quantity * $price;
+            $subtotal   += $total;
+
+            $updateQuote->items()->create([
+                'user_id'    => Auth::id(),
+                'item_id'    => $id,
+                'item_name'  => $name,
+                'description'=> $description,
+                'quantity'   => $quantity,
+                'price'      => $price,
+                'total'      => $total,
+            ]);
+        }
+
+        // Calculate discount + totals
+        $discountAmount = 0;
+        if ($request->discount_type === '%') {
+            $discountAmount = ($subtotal * $request->discount / 100);
+        } elseif ($request->discount_type === 'fixed') {
+            $discountAmount = $request->discount_value;
+        }
+
+        $grandTotal = $subtotal - $discountAmount;
+
+        // Update totals
+        $updateQuote->update([
+            'subtotal'       => $subtotal,
+            'total_discount' => $request->discount_value,
+            'grand_total'    => $grandTotal,
+        ]);
+
+        // Logging
         $log_title = "Quote Updated";
-        $log_text = "Quote: $updateQuote->quote_id Updated";
+        $log_text  = "Quote: $updateQuote->quote_id Updated";
         $log = new LogService();
-        $log->addLog($request->customer_id, 'quote', $updateQuote->id, 'log', $log_title, $log_text,User::class);
-        return redirect()->route('admin.quotes')->with('success', 'Quote Updated Successfully');
-//        dd($request->all());
+        $log->addLog(
+            $request->customer_id,
+            'quote',
+            $updateQuote->id,
+            'log',
+            $log_title,
+            $log_text,
+            User::class
+        );
+
+        return redirect()->route('freelancer.quotes')->with('success', 'Quote Updated Successfully');
     }
+
 
     public function view_quote($id)
     {
 
         $current_quote = Quote::find($id);
         $user = auth()->user();
-        $customer_address = CustomerAddress::where('customer_id', $current_quote->customer_id)->where('address_type', 'billing')->first();
         $quote_items = QuoteItem::where('quote_id', $current_quote->id)->with('item')->get();
-        $quote_comments_logs = LogsComment::where('customer_id', $current_quote->customer_id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
-        $quotes = Quote::where("company_id", Auth::user()->company_id)->with('customer')->get();
-        return \view('admin.quote.view', compact('quotes', 'id','current_quote', 'user', 'customer_address', 'quote_items', 'quote_comments_logs'));
+        $quote_comments_logs = LogsComment::where('action_id', $current_quote->id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
+        $quotes = Quote::where("user_id", Auth::user()->id)->with('client')->get();
+
+        return view('freelancer.quote.view', compact('quotes', 'id','current_quote', 'user', 'quote_items', 'quote_comments_logs'));
     }
 
     public function render(Request $request)
@@ -251,11 +281,10 @@ class QuoteController extends Controller
         $current_quote = Quote::find($request->quote_id);
         $id = $request->quote_id;
         $user = auth()->user();
-        $customer_address = CustomerAddress::where('customer_id', $current_quote->customer_id)->where('address_type', 'billing')->first();
         $quote_items = QuoteItem::where('quote_id', $current_quote->id)->with('item')->get();
-        $quote_comments_logs = LogsComment::where('customer_id', $current_quote->customer_id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
-        $quotes = Quote::where("company_id", Auth::user()->company_id)->with('customer')->get();
-        $html = view('admin.quote.ajax_views.details_render', compact('current_quote','id','customer_address', 'user', 'quote_items', 'quote_comments_logs', 'quotes'))->render();
+        $quote_comments_logs = LogsComment::where('action_id', $current_quote->id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
+        $quotes = Quote::where("company_id", Auth::user()->company_id)->with('client')->get();
+        $html = view('freelancer.quote.ajax_views.details_render', compact('current_quote','id', 'user', 'quote_items', 'quote_comments_logs', 'quotes'))->render();
 
         return response()->json([
             'status' => true,
@@ -270,20 +299,19 @@ class QuoteController extends Controller
         $comment = $request->comment;
         $newComment = new LogService();
         $newComment->addLog($customer_id, 'quote', $quote_id, 'comment', '', $comment,User::class);
-        $quote_comments_logs = LogsComment::where('customer_id', $customer_id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
-        $comments_blade = view('admin.quote.ajax_views.comments', compact('quote_comments_logs'))->render();
+        $quote_comments_logs = LogsComment::where('action_id', $quote_id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
+        $comments_blade = view('freelancer.quote.ajax_views.comments', compact('quote_comments_logs'))->render();
         return response()->json(['all_comments' => $comments_blade]);
     }
 
     public function generatePDF($id)
     {
         $quote = Quote::findOrFail($id);
-        $customer_address = CustomerAddress::where('customer_id', $quote->customer_id)->where('address_type', 'billing')->first();
         $quote_items = QuoteItem::where('quote_id', $quote->id)->with('item')->get();
-//        return view('admin.partials.quotes.pdf', compact('quote','quote_items'));
-        $pdf = Pdf::loadView('admin.partials.quotes.pdf', compact('quote', 'quote_items', 'customer_address'));
+        // return view('freelancer.partials.quotes.pdf', compact('quote','quote_items'));
+        $pdf = Pdf::loadView('freelancer.partials.quotes.pdf', compact('quote', 'quote_items'));
 
-        return $pdf->download('quote-' . $quote->quote_id . '.pdf');
+        return $pdf->download('quote-' . $quote->quote_number . '.pdf');
     }
 
     public function updateSettings(Request $request)
@@ -327,7 +355,7 @@ class QuoteController extends Controller
     {
         $attachments = $quote->attachments()->latest()->get();
 
-        $html = view('admin.partials.invoice.invoice_attachments_list', compact('attachments'))->render();
+        $html = view('freelancer.partials.invoice.invoice_attachments_list', compact('attachments'))->render();
         return response()->json(['html' => $html]);
 
     }
@@ -336,9 +364,8 @@ class QuoteController extends Controller
     {
         $quote = Quote::find($quote_id);
         if ($quote) {
-//        dd($quote->status);
-            if ($quote->status == "Converted To Invoice") {
-                return redirect()->route('admin.invoices')->with('success', 'Quote already converted to Invoice');
+            if ($quote->status === "Converted To Invoice") {
+                return redirect()->back()->with('success', 'Quote already converted to Invoice');
             } else {
 
 
@@ -351,26 +378,22 @@ class QuoteController extends Controller
                     $discount_type = "fixed";
                 }
                 $uuid = Uuid::uuid7();
+
                 $invoice = Invoice::create([
-                    'customer_id' => $quote->customer_id,
-                    'sales_person_id' => $quote->sales_person,
-                    'unique_id' => $quote->unique_id,
+                    'client_id' => $quote->client_id,
+                    'unique_id' => $uuid->toString(),
                     'user_id' => Auth::user()->id,
-                    'company_id' => Auth::user()->company_id,
                     'invoice_number' => $this->generateNewInvoiceNumber(),
                     'order_number' => $quote->reference,
                     'subject' => $quote->subject,
                     'invoice_date' => $invoice_date,
                     'due_date' => $invoice_due_date,
-//                'terms' => $quote->terms_and_conditions,
-                    'terms' => "net60",
                     'discount' => $quote->discount_value ?? 0.00,
                     'discount_type' => $discount_type,
                     'discounted_amount' => $quote->total_discount ?? 0.00,
-                    'shipping_charges' => $quote->shipping_charges ?? 0.00,
                     'terms_condition' => $quote->terms_condition,
-                    'notes' => $quote->customer_notes,
-                    'status' => 'Draft',
+                    'notes' => $quote->client_notes,
+                    'status' => 'Converted To Invoice',
                     'subtotal' => $quote->subtotal,
                     'total' => $quote->grand_total,
                     'due' => $quote->grand_total,
@@ -390,10 +413,10 @@ class QuoteController extends Controller
                     $invoice_item->invoice_id = $invoice->id;
                     $invoice_item->item_id = $quote_item->item_id;
                     $invoice_item->item_name = $item_name;
-                    $invoice_item->description = $quote_item->item_description;
-                    $invoice_item->quantity = $quote_item->item_qty;
-                    $invoice_item->price = $quote_item->item_rate;
-                    $invoice_item->total = $quote_item->item_amount;
+                    $invoice_item->description = $quote_item->description;
+                    $invoice_item->quantity = $quote_item->quantity;
+                    $invoice_item->price = $quote_item->price;
+                    $invoice_item->total = $quote_item->total;
                     $invoice_item->save();
                 }
                 $quote->status = "Converted To Invoice";
@@ -415,13 +438,12 @@ class QuoteController extends Controller
 
 
                 $log_title = "Quote Converted To Invoice";
-//            $log_text="New Invoice: $quote->quote_number Created for $".$total;
-//            $log = new LogService();
-//            $performerType =  User::class;
+                $log_text="This Quote: $quote->quote_number has been converted to invoice and the total is : $".$quote->grand_total;
+                $log = new LogService();
+                $performerType =  User::class;
+                $log->addLog($quote->client_id,'quote',$quote_id,'log',$log_title,$log_text,$performerType);
 
-
-//        $log->addLog($request->customer_id,'invoice',$invoice->id,'log',$log_title,$log_text,$performerType);
-                return redirect()->route('admin.invoices')->with('success', 'Quote converted to Invoice Successfully');
+                return redirect()->back()->with('success', 'This quote has been converted to invoice successfully');
             }
         }
     }
@@ -468,7 +490,7 @@ class QuoteController extends Controller
 
         $this->emailService->sendEmail($emailData);
 
-        $updateInvoice = Invoice::find($request->model_id);
+        $updateInvoice = Quote::find($request->model_id);
         $updateInvoice->status = 'Sent';
         $updateInvoice->update();
 

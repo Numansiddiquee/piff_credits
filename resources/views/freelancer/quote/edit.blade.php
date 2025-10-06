@@ -1,21 +1,53 @@
-@extends('admin.layout.main')
-
-@section('css')
+@extends('layouts.custom.freelancer')
+@section('freelancer-css')
     <style>
-        /* Styling each customer option */
-        .select2-customer-option {
+        #productDropdown {
+            position: relative;
+            background-color: white;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #productDropdown .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        #productDropdown .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        #productDropdown .dropdown-divider {
+            border-top: 1px solid #ddd;
+            margin: 5px 0;
+        }
+
+        /* General styling for the select2 dropdown */
+        .select2-container--bootstrap5 .select2-results__options {
+            padding: 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling each client option */
+        .select2-client-option {
             display: flex;
             align-items: center;
             padding: 10px;
             cursor: pointer;
         }
 
-        .select2-customer-option:hover {
-            background-color: #f9f9f9;
+        .select2-client-option:hover {
+            background-color: #f3f4f6;
         }
 
         /* Customer initials circle */
-        .select2-customer-initials {
+        .select2-client-initials {
             width: 32px;
             height: 32px;
             background-color: #c4c4c4;
@@ -29,39 +61,74 @@
         }
 
         /* Customer details */
-        .select2-customer-details {
+        .select2-client-details {
             display: flex;
             flex-direction: column;
         }
 
-        .select2-customer-name {
+        .select2-client-name {
             font-weight: bold;
             font-size: 14px;
             color: #333;
         }
 
-        .select2-customer-email {
+        .select2-client-email {
             font-size: 12px;
             color: #777;
         }
 
         /* Styling the "+ New Customer" option */
-        .select2-new-customer {
-            text-align: left
+        .select2-new-client {
+            text-align: center;
             font-weight: bold;
             color: #007bff;
-            padding: 0 10px;
+            padding: 10px;
             cursor: pointer;
         }
 
-        .select2-new-customer:hover {
-            background-color: #f9f9f9;
+        .select2-new-client:hover {
+            background-color: #f3f4f6;
             text-decoration: underline;
+        }
+
+        .product-list input {
+            width: 100%;
+        }
+
+        /* Highlight selected item in the product list */
+        .product-list .list-group-item.selected {
+            background-color: #f1f1f4d6;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .quantity-controls button {
+            margin: 0 5px;
+        }
+
+        .pcs-itemtable-header {
+            padding-bottom: 1.25rem !important;
+            color: #ffffff !important;
+            background-color: #3c3d3a !important;
+        }
+
+        table td:last-child {
+            padding-right: 1.5rem !important;
+        }
+        table th:last-child {
+            padding-right: 1.5rem !important;
+        }
+
+        .pe-7, .ps-0 {
+            padding-left: 20px !important;
         }
     </style>
 @endsection
 
-@section('content')
+@section('freelancer-content')
 
     <div id="kt_app_toolbar" class="app-toolbar pt-0 pb-2 mb-2">
         <!--begin::Toolbar container-->
@@ -83,32 +150,25 @@
     </div>
     <div class="card mb-5 mb-xl-8">
         <div class="card-body py-3">
-            <form action="{{route("admin.quote.update_quote") }}" method="POST" enctype="multipart/form-data">
+            <form action="{{route('freelancer.quote.update_quote') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <input type="text" class="d-none" value="{{$quote->id}}" name="id">
+                <input type="text" class="d-none" value="{{$quote->id}}" name="quote_id">
                 <div class="row p-1 mb-2">
                     <div class="col-md-6 fv-row">
-                        <label class="fs-6 fw-semibold mb-4 required text-danger">Select Customer</label>
-                        <select class="form-select form-select-sm" name="customer_id" required
-                                aria-label="Customer Name"
-                                data-control="select2" id="customer-select"
+                        <label class="fs-6 fw-semibold mb-4 required text-danger">Select client</label>
+                        <select class="form-select form-select-sm" name="client_id" required
+                                aria-label="client Name"
+                                data-control="select2" id="client-select"
                                 data-placeholder="Select an option">
-                            <option value="" selected disabled>Select a Customer</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" @if($quote->customer_id == $customer->id) selected
-                                        @endif data-name="{{ $customer->first_name }}"
-                                        data-email="{{ $customer->email }}" data-type="customer">
-                                    {{ $customer->first_name }} - {{ $customer->email }}
+                            <option value="" selected disabled>Select a client</option>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}" @if($quote->client_id == $client->id) selected
+                                        @endif data-name="{{ $client->name }}"
+                                        data-email="{{ $client->email }}" data-type="client">
+                                    {{ $client->name }} - {{ $client->email }}
                                 </option>
-                                {{--                                <option--}}
-                                {{--                                    value="{{ $customer->id }}">{{ $customer->display_name != null ? $customer->display_name : $customer->first_name .' '.$customer->last_name}}</option>--}}
                             @endforeach
-                            <option value="new_customer" data-type="new_customer">+ New Customer</option>
-                            {{--                            <option value="new_customer" >--}}
-                            {{--                                <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm">--}}
-                            {{--                                    <i class="ki-outline ki-trash fs-2"></i>--}}
-                            {{--                                </a>--}}
-                            {{--                                <span style="background-color: red">New Customer</span></option>--}}
+                            <option value="new_client" data-type="new_client">+ New client</option>
                         </select>
                     </div>
                 </div>
@@ -118,8 +178,8 @@
                         <label class="fs-6 fw-semibold mb-2 text-danger required">Quote#</label>
                         <div class="input-group mb-5">
                         <input type="text" class="form-control form-control-sm" required placeholder="Quote"
-                               id="quote_id" value="{{ $quote->quote_id }}"
-                               name="quote_id"/>
+                               id="quote_number" value="{{ $quote->quote_number }}"
+                               name="quote_number"/>
                         <span class="input-group-text" id="basic-addon2"  data-bs-toggle="modal" data-bs-target="#quoteNumberSetting">
                             <i class="bi bi-gear fs-4"></i>
                         </span>
@@ -149,254 +209,122 @@
                     </div>
                 </div>
                 <div class="separator my-5"></div>
-
-                <div class="row p-1 mb-2">
-                    <div class="col-md-3 fv-row">
-                        <label class="fs-6 fw-semibold mb-2">Sales Person</label>
-                        <select class="form-select form-select-sm" name="sales_person" data-control="select2"
-                                data-placeholder="Select an option">
-                            <option value="" selected disabled>Select a Sales Person</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}"
-                                        @if($quote->sales_person == $customer->id) selected @endif> {{ $customer->display_name != null ? $customer->display_name : $customer->first_name .' '.$customer->last_name}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 fv-row" id="select_projects">
-                        <label class="fs-6 fw-semibold mb-2">Select Project</label>
-                        <select class="form-select form-select-sm" name="project" data-control="select2">
-                            <option value="" selected disabled>Select a Project</option>
-                            @foreach($projects as $project)
-                                <option
-                                    value="{{ $project->id }}"
-                                    @if($quote->project_id == $project->id) selected @endif>{{ $project->project_name}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="separator my-5"></div>
                 <div class="row p-1 mb-2">
                     <div class="col-md-4">
                         <label class="fs-6 fw-semibold mb-2">Subject</label>
                         <textarea class="form-control form-control-sm" name="subject"
                                   placeholder="Let Your Customers Know what this quote is for"
-                                  rows=2">{{$quote->subject}}</textarea>
+                                  rows="2">{{$quote->subject}}</textarea>
                     </div>
                 </div>
                 <div class="separator my-5"></div>
-                <div class="row">
-                    <div class="card p-0">
-                        <h4 class="card-header h4 align-items-center bg-light" style="min-height:60px ">Item Table</h4>
-                        <div class="card-body">
-                            <div class="col-md-12" id="items_repeater">
-                                <table class="table table-bordered">
-                                    <thead>
-                                    <tr>
-                                        <td style="min-width: 300px;">Item</td>
-                                        <td style="width: 120px;">QTY</td>
-                                        <td style="width: 120px;">Rate</td>
-                                        <td style="width: 200px;text-align: right">Amount</td>
-                                        <td>Action</td>
-                                    </tr>
-                                    </thead>
-                                    <tbody data-repeater-list="items_repeater">
-                                    @foreach($quoteItems as $quoteItem)
-
-                                        <tr data-repeater-item>
-                                            <td>
-                                                <div class="item-details">
-                                                    <input type="text" value="{{ $quoteItem->id }}" name="quote_item_id" class="d-none">
-                                                    <select name="item_id" class="form-select form-select-sm item_id"
-                                                            data-kt-repeater="select2"
-                                                            data-placeholder="Select an option"
-                                                            data-control="select2">
-                                                        <option value="" selected disabled>Select an Item</option>
-                                                        @foreach($items as $item)
-                                                            <option value="{{ $item->id }}"
-                                                                    @if($quoteItem->item_id == $item->id) selected @endif>{{ $item->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <textarea
-                                                        class=" mt-3 form-control form-control-solid form-control-sm"
-                                                        name="item_desc"
-                                                        placeholder="Description">{{$quoteItem->item_description}}</textarea>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="">
-                                                    <input class="form-control form-control-sm item_qty" type="number"
-                                                           name="item_qty"
-                                                           value="{{ $quoteItem->item_qty }}"/>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="">
-                                                    <input class="form-control form-control-sm item_rate" type="number"
-                                                           value="{{$quoteItem->item_rate}}"
-                                                           name="item_rate">
-                                                </div>
-                                            </td>
-                                            <td style="text-align: right">
-                                                <div class="">
-                                                    <span class="d-inline">$</span>
-                                                    <h4 class="h4 d-inline item_total">{{$quoteItem->item_amount}}</h4>
-                                                    <input class="form-control form-control-sm item_total_field d-none" value="{{$quoteItem->item_amount}}"
-                                                           type="number" name="item_total">
-                                                    {{--                                                <input class="form-control form-control-sm" type="number">--}}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="javascript:;" data-repeater-delete
-                                                   class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm delete_row">
-                                                    <i class="ki-outline ki-trash fs-2"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    <tr data-repeater-item>
-                                        <td>
-                                            <div class="item-details">
-                                                <select name="item_id" class="form-select form-select-sm item_id"
-                                                        data-kt-repeater="select2"
-                                                        data-placeholder="Select an option"
-                                                        data-control="select2">
-                                                    <option value="" selected disabled>Select an Item</option>
-                                                    @foreach($items as $item)
-                                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                                <textarea class=" mt-3 form-control form-control-solid form-control-sm"
-                                                          name="item_desc"
-                                                          placeholder="Description"></textarea>
+                <div class="mb-0">
+                    <div class="table-responsive mb-10">
+                        <!--begin::Table-->
+                        <table class="table g-5 gs-0 mb-0 fw-bold text-gray-700" data-kt-element="items">
+                            <!--begin::Table head-->
+                            <thead>
+                            <tr class="border-bottom fs-7 fw-bold text-gray-700 text-uppercase">
+                                <th class="min-w-300px w-475px pcs-itemtable-header"  style="padding-left: 1.5rem !important;">Item</th>
+                                <th class="min-w-100px w-100px pcs-itemtable-header">QTY</th>
+                                <th class="min-w-150px w-150px pcs-itemtable-header">Price</th>
+                                <th class="min-w-100px w-150px pcs-itemtable-header text-end">Total</th>
+                                <th class="min-w-75px w-75px pcs-itemtable-header text-end"  style="padding-right: 1.5rem !important;">Action</th>
+                            </tr>
+                            </thead>
+                            <!--end::Table head-->
+                            <!--begin::Table body-->
+                            <tbody id="itemTableBody" style="border: 1px solid #e3dfdf9e;">
+                                @foreach($quoteItems as $item)
+                                    <tr class="border-bottom border-bottom-dashed" data-kt-element="item">
+                                        <td class="pe-7">
+                                            <input type="text" class="form-control form-control-sm mb-2 item-name" name="name[]" value="{{ $item->item_name }}" placeholder="Type or click to select an item" autocomplete="off" readonly onclick="toggleDropdown(this)" />
+                                            <div class="dropdown-menu dropdown-product" style="display: none;">
+                                                @foreach($items as $ite)
+                                                    <div class="dropdown-item" style="min-width: 380px;" onclick="selectItem(this,'{{ $ite->name }}', {{ $ite->selling_price }},{{ $ite->id }} ,'{{ $ite->description }}')">
+                                                        <b>{{ $ite->name }}</b><br>
+                                                        <span>Rate: ${{ $ite->selling_price }}</span>
+                                                    </div>
+                                                @endforeach
+                                                <div class="dropdown-divider"></div>
+                                                <div class="dropdown-item text-primary" onclick="addNewItem()">+ Add New Item</div>
                                             </div>
+                                            <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]" value="{{ $item->item_id }}"/>
+                                            <input type="text" class="form-control form-control-sm item-description" name="description[]" value="{{ $item->description }}" placeholder="Description" />
+                                        </td>
+                                        <td class="ps-0">
+                                            <input class="form-control form-control-sm" type="number" min="1" name="quantity[]" value="{{ $item->quantity }}" placeholder="1" value="1" data-kt-element="quantity" onchange="updateRowTotal(this)" />
                                         </td>
                                         <td>
-                                            <div class="">
-                                                <input class="form-control form-control-sm item_qty" type="number"
-                                                       name="item_qty"
-                                                       value="1"/>
-                                            </div>
+                                            <input type="text" class="form-control form-control-sm text-end" name="price[]" placeholder="0.00" value="{{ $item->price }}" data-kt-element="price" onchange="updateRowTotal(this)" />
                                         </td>
-                                        <td>
-                                            <div class="">
-                                                <input class="form-control form-control-sm item_rate" type="number"
-                                                       name="item_rate">
-                                            </div>
-                                        </td>
-                                        <td style="text-align: right">
-                                            <div class="">
-                                                <span class="d-inline">$</span>
-                                                <h4 class="h4 d-inline item_total">0</h4>
-                                                <input class="form-control form-control-sm item_total_field d-none"
-                                                       type="number" name="item_total">
-                                                {{--                                                <input class="form-control form-control-sm" type="number">--}}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <a href="javascript:;" data-repeater-delete
-                                               class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm delete_row">
-                                                <i class="ki-outline ki-trash fs-2"></i>
-                                            </a>
+                                        <td class="pt-8 text-end text-nowrap">$
+                                            <span data-kt-element="total">{{ $item->total }}</span></td>
+                                        <td class="pt-5 text-end">
+                                            <button type="button" class="btn btn-sm btn-icon btn-active-color-primary" onclick="removeItem(this)">
+                                                <i class="ki-outline ki-trash fs-3"></i>
+                                            </button>
                                         </td>
                                     </tr>
-                                    </tbody>
-                                </table>
-                                <div class="row">
-                                    <div class="col-md-6 d-flex flex-column justify-content-between">
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <a href="javascript:;" class="btn btn-sm btn-primary"
-                                                   data-repeater-create type="button">
-                                                    <i class="ki-duotone ki-plus fs-3"></i>
-                                                    Add New Row</a>
-                                                <button class="btn btn-sm btn-primary" type="button">Add Bulk Items
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <label class="fs-6 fw-semibold mb-2">Customer Notes</label>
-                                                <textarea class="form-control form-control-sm" rows="3"
-                                                          name="customer_notes"
-                                                          placeholder="Looking Forward for your business">{{$quote->customer_notes}}</textarea>
-                                            </div>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <div class="separator separator-dashed my-5"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex flex-column justify-content-between" style="height:198px">
+                                    <div class="row">
+                                        <div class="d-flex gap-4">
+                                            <button type="button" class="btn btn-sm btn-light-primary btn-sm py-1" onclick="addNewItemRow()">
+                                                <i class="ki-outline ki-plus-square fs-3"></i>Add item
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="card bg-light">
-                                            <div class="card-body">
-                                                <div class="row ">
-                                                    <div class="col-md-6 d-flex flex-start">
-                                                        <h5>Subtotal</h5>
-                                                    </div>
-                                                    <div class="col-md-6 d-flex flex-end">
-                                                        <input type="text" id="subtotal" name="sub_total"
-                                                               class="form-control form-control-sm d-none">
-                                                        <h5 id="subtotal_text"></h5>
-                                                    </div>
-                                                </div>
-                                                <div class="separator border-dark-clarity my-4"></div>
-                                                <div class="row">
-                                                    <div class="col-md-4 d-flex align-items-center">
-                                                        Discount
-                                                    </div>
-                                                    <div class="col-md-6 d-flex">
-                                                        <input type="number" id="discount_value" name="discount_value" value="{{ $quote->discount_value }}"
-                                                               class="form-control form-control-sm">
-                                                        <select id="discount_type" name="discount_type"
-                                                                class="form-select form-control-sm p-2"
-                                                                style="width: 60px;height: 30px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                                                            <option value="percentage" @if($quote->discount_type == "percentage") selected @endif>%</option>
-                                                            <option value="number" @if($quote->discount_type == "number") selected @endif>$</option>
-                                                        </select>
+                                    <div class="row">
+                                        <div class="d-flex flex-column">
+                                            <label class="form-label fs-6 fw-bold text-gray-700">Customer Notes</label>
+                                            <textarea name="notes" class="form-control form-control-sm" rows="3" placeholder="Thanks for your business">{{ $quote->client_notes }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="row ">
+                                            <div class="col-md-6 d-flex flex-start">
+                                                <h5>Subtotal</h5>
+                                            </div>
+                                            <div class="col-md-6 d-flex flex-end">
+                                                <input type="text" id="subtotal" name="sub_total" class="form-control form-control-sm d-none">
+                                                <h5 data-kt-element="sub-total">$ {{$quote->subtotal}}</h5>
+                                            </div>
+                                        </div>
+                                        <div class="separator border-dark-clarity my-4"></div>
+                                        <div class="row">
+                                            <div class="col-md-4 d-flex align-items-center">
+                                                Discount
+                                            </div>
+                                            <div class="col-md-6 d-flex">
+                                                <input type="number" id="discount" name="discount_value" value="{{$quote->discount_value}}"  class="form-control form-control-sm" oninput="updateTotals()" >
+                                                <select id="discount-type" name="discount_type" onchange="updateTotals()" class="form-select form-control-sm p-2" style="width: 60px;height: 30px; border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                                    <option value="%" {{ '%' == $quote->discount_type ? 'selected' : '' }}>%</option>
+                                                    <option value="fixed"{{ 'fixed' == $quote->discount_type ? 'selected' : '' }}>$</option>
+                                                </select>
 
-                                                    </div>
-                                                    <div class="col-md-2 d-flex flex-end">
-                                                        <input type="text" id="total_discount" name="total_discount"
-                                                               value=""
-                                                               class="form-control form-control-sm d-none">
-                                                        <p id="discount_text"></p>
-                                                    </div>
-                                                </div>
-                                                <div class="row my-2">
-                                                    <div class="col-md-4 d-flex align-items-center">
-                                                        Shipping Charges
-                                                    </div>
-                                                    <div class="col-md-6 d-flex">
-                                                        <input type="number" id="shipping_charges" value="{{ $quote->shipping_charges }}"
-                                                               name="shipping_charges"
-                                                               class="form-control form-control-sm">
-                                                    </div>
-                                                    <div class="col-md-2 d-flex flex-end">
-                                                        <p id="shipping_text"></p>
-                                                    </div>
-                                                </div>
-                                                <div class="row my-2">
-                                                    <div class="col-md-4 d-flex align-items-center">
-                                                        <input type="text" id="adjustment_field" value="{{$quote->adjustment_field}}"
-                                                               name="adjustment_field"
-                                                               class="form-control form-control-sm">
-                                                    </div>
-                                                    <div class="col-md-6 d-flex">
-                                                        <input type="number" id="adjustment_value"
-                                                               name="adjustment_value" value="{{ $quote->adjustment_value }}"
-                                                               class="form-control form-control-sm">
-                                                    </div>
-                                                    <div class="col-md-2 d-flex flex-end">
-                                                        <p id="adjustment_text"></p>
-                                                    </div>
-                                                </div>
-                                                <div class="separator border-dark-clarity my-4 mt-5"></div>
-                                                <div class="row">
-                                                    <div class="col-md-6 d-flex flex-start">
-                                                        <h5>Total ($)</h5>
-                                                    </div>
-                                                    <div class="col-md-6 d-flex flex-end">
-                                                        <input type="text" id="grandTotal" name="grand_total"
-                                                               class="form-control form-control-sm d-none">
-                                                        <h4 id="grand_total_text" class="h4 fw-bolder"></h4>
-                                                    </div>
-                                                </div>
+                                            </div>
+                                            <div class="col-md-2 d-flex flex-end">
+                                                <input type="hidden" id="discount-total-amount" name="total_discount" value="{{$quote->total_discount}}">
+                                                <span id="discount-total">$ {{$quote->total_discount}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="separator border-dark-clarity my-4 mt-5"></div>
+                                        <div class="row">
+                                            <div class="col-md-6 d-flex flex-start">
+                                                <h5>Total ($)</h5>
+                                            </div>
+                                            <div class="col-md-6 d-flex flex-end">
+                                                <span data-kt-element="grand-total" class="h4 fw-bolder">$ {{$quote->grand_total}}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -404,6 +332,40 @@
                             </div>
                         </div>
                     </div>
+                    <!--end::Table-->
+                    <!--begin::Item template-->
+                    <template id="item-template">
+                        <tr class="border-bottom border-bottom-dashed" data-kt-element="item">
+                            <td class="pe-7">
+                                <input type="text" class="form-control form-control-sm mb-2 item-name" name="name[]" placeholder="Type or click to select an item" autocomplete="off" readonly onclick="toggleDropdown(this)" />
+                                <div class="dropdown-menu dropdown-product" style="display: none;">
+                                    @foreach($items as $item)
+                                        <div class="dropdown-item" style="min-width: 380px;" onclick="selectItem(this, '{{ $item->name }}', {{ $item->selling_price }},{{ $item->id }} ,'{{ $item->description }}')">
+                                            <b>{{ $item->name }}</b><br>
+                                            <span>Rate: ${{ $item->selling_price }}</span>
+                                        </div>
+                                    @endforeach
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-item text-primary" onclick="addNewItem()">+ Add New Item</div>
+                                </div>
+                                <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]"/>
+                                <input type="text" class="form-control form-control-sm item-description" name="description[]" placeholder="Description" />
+                            </td>
+                            <td class="ps-0">
+                                <input class="form-control form-control-sm" type="number" min="1" name="quantity[]" placeholder="1" value="1" data-kt-element="quantity" onchange="updateRowTotal(this)" />
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm text-end" name="price[]" placeholder="0.00" value="0.00" data-kt-element="price" onchange="updateRowTotal(this)" />
+                            </td>
+                            <td class="pt-8 text-end text-nowrap">$
+                                <span data-kt-element="total">0.00</span></td>
+                            <td class="pt-5 text-end">
+                                <button type="button" class="btn btn-sm btn-icon btn-active-color-primary" onclick="removeItem(this)">
+                                    <i class="ki-outline ki-trash fs-3"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
                 </div>
                 <div class="separator my-5"></div>
                 <div class="row p-1 mb-2">
@@ -415,7 +377,7 @@
                     </div>
                     <div class="col-md-4">
                         <label for="" class="fs-6 fw-semibold mb-2">Attach Files to Quote</label>
-                        <input type="file" class="form-control form-control-sm" name="documents" id="documents">
+                        <input type="file" class="form-control form-control-sm" name="attachments[]" id="documents" multiple>
                     </div>
                 </div>
                 <div class="separator my-5"></div>
@@ -431,81 +393,151 @@
             </form>
         </div>
     </div>
-    @include('admin.partials.quotes.quoteNumberSetting')
+    @include('freelancer.partials.quotes.quoteNumberSetting')
 
 @endsection
 
-@section('js')
-    <script src="{{ asset('assets/plugins/custom/formrepeater/formrepeater.bundle.js') }}"></script>
+@section('freelancer-js')
+    <script src="{{asset('metronic/assets/js/custom/apps/invoices/create_new.js')}}"></script>
+    <script>
+
+        function toggleDropdown(element) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.style.display = 'none');
+            const dropdown = element.nextElementSibling;
+            dropdown.style.display = 'block';
+        }
+
+        function selectItem(dropdownItem, name, price,id,description) {
+            const row = dropdownItem.closest('tr');
+            row.querySelector('.item-name').value = name;
+            row.querySelector('.item-id').value = id;
+            row.querySelector('.item-description').value = description;
+            row.querySelector('[name="price[]"]').value = price.toFixed(2);
+            updateRowTotal(row.querySelector('[name="price[]"]'));
+            dropdownItem.closest('.dropdown-menu').style.display = 'none';
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.classList.contains('item-name')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => menu.style.display = 'none');
+            }
+        });
+
+        function addNewItemRow() {
+            const template = document.getElementById('item-template').content.cloneNode(true);
+            document.getElementById('itemTableBody').appendChild(template);
+        }
+
+        function removeItem(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateTotals();
+        }
+
+        function updateRowTotal(priceInput) {
+            const row = priceInput.closest('tr');
+            const quantity = row.querySelector('[name="quantity[]"]').value;
+            const price = row.querySelector('[name="price[]"]').value;
+            const total = (quantity * price).toFixed(2);
+            row.querySelector('[data-kt-element="total"]').innerText = total;
+
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let subtotal = 0;
+
+            // Calculate the subtotal by summing up individual totals
+            const totals = document.querySelectorAll('[data-kt-element="total"]');
+            totals.forEach(totalElement => {
+                subtotal += parseFloat(totalElement.innerText) || 0;
+            });
+
+            // Update the displayed subtotal
+            document.querySelector('[data-kt-element="sub-total"]').innerText = subtotal.toFixed(2);
+
+            // Get discount and type
+            const discount = parseFloat(document.getElementById("discount").value) || 0;
+            const discountType = document.getElementById("discount-type").value;
+
+            // Calculate discount amount
+            let discountAmount = 0;
+            if (discountType === "%") {
+                discountAmount = (subtotal * discount) / 100;
+            } else {
+                discountAmount = discount;
+            }
+            if(discountAmount > 0){
+                $('#discount-total').text('- $ '+discountAmount);
+            }else{
+                $('#discount-total').text(discountAmount);
+            }
+
+            $('#discount-total-amount').val(discountAmount);
+
+            // Get shipping charges
+            // const shipping = parseFloat(document.getElementById("shipping").value) || 0;
+            // $('#shipping-total').text(shipping);
+            // Calculate grand total
+            let grandTotal = subtotal - discountAmount;
+            grandTotal = grandTotal < 0 ? 0 : grandTotal; // Ensure no negative total
+
+            // Update the displayed grand total
+            document.querySelector('[data-kt-element="grand-total"]').innerText = grandTotal.toFixed(2);
+        }
+
+        // Call updateTotals whenever any relevant field changes
+        document.getElementById("discount").addEventListener("input", updateTotals);
+        document.getElementById("discount-type").addEventListener("change", updateTotals);
+
+    </script>
     <script>
         $(document).ready(function () {
 
             $("#quote_date").flatpickr();
             $("#expiry_date").flatpickr();
 
-            $('#customer-select').select2({
-                placeholder: "Select or Add a Customer",
-                allowClear: true,
-                templateResult: formatCustomer,
-                escapeMarkup: function (markup) {
-                    return markup;
-                }
-            });
+            $(document).ready(function() {
+                $('#client-select').select2({
+                    placeholder: "Select or add a client",
+                    allowClear: true,
+                    templateResult: formatCustomer,
+                    escapeMarkup: function (markup) { return markup; }
+                });
 
-            function formatCustomer(option) {
-                // alert('asdf');
-                if (!option.id) return option.text; // Placeholder case
+                function formatCustomer(option) {
+                    if (!option.id) return option.text; // Placeholder case
 
-                const type = $(option.element).data('type');
+                    const type = $(option.element).data('type');
 
-                if (type === "new_customer") {
-                    return '<div class="select2-new-customer">+ New Customer</div>';
-                }
+                    if (type === "new_client") {
+                        return '<div class="select2-new-client">+ New Client</div>';
+                    }
 
-                const name = $(option.element).data('name');
-                const email = $(option.element).data('email');
+                    const name = $(option.element).data('name');
+                    const email = $(option.element).data('email');
 
-                return `
-                            <div class="select2-customer-option">
-                                <div class="select2-customer-initials">${name.charAt(0)}</div>
-                                <div class="select2-customer-details">
-                                    <div class="select2-customer-name">${name}</div>
-                                    <div class="select2-customer-email">${email}</div>
+                    return `
+                                <div class="select2-client-option">
+                                    <div class="select2-client-initials">${name.charAt(0)}</div>
+                                    <div class="select2-client-details">
+                                        <div class="select2-client-name">${name}</div>
+                                        <div class="select2-client-email">${email}</div>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-            }
-
-            $('#customer-select').on('change', function () {
-                if ($(this).val() === "new_customer") {
-                    $(this).val(null).trigger('change'); // Reset the select
-                    window.location.href = "{{ route('admin.customer.new_customer')}}";
-                } else {
-                    let customer_id = $(this).val();
-                    $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Fetch CSRF token
-                        },
-                        url: '{{ route("admin.quote.getCustomerProjectsAndContacts") }}', // Replace with your route
-                        method: 'POST',
-                        data: {
-                            'customer_id': customer_id
-                        }, // Serialize form data
-                        success: function (response) {
-                            console.log("customer data", response)
-                            $('#select_projects').html();
-                            $('#select_projects').html(response.projects);
-                            $('#email_communication_row').html(response.contacts);
-                            // price_field.val(response.selling_price);
-                            // rowTotal(row);
-                        },
-                        error: function (xhr, status, error) {
-                            alert('An error occurred: ' + xhr.responseText);
-                        }
-                    });
+                            `;
                 }
+
+                $('#client-select').on('change', function() {
+                    if ($(this).val() === "new_client") {
+                        $(this).val(null).trigger('change'); // Reset the select
+                        window.location.href = "{{ route('freelancer.client.create_client') }}";
+                    }
+                });
             });
+
         });
+
 
         $('#items_repeater').repeater({
             initEmpty: false,
@@ -698,7 +730,7 @@
                 var nextNumber = $('#nextNumber').val();
 
                 $.ajax({
-                    url: '{{ route("admin.quote.quote_number_settings") }}',
+                    url: '{{ route("freelancer.quote.quote_number_settings") }}',
                     method: 'POST',
                     data: {
                         quoteNumberMode: isAutoGenerate,

@@ -77,8 +77,11 @@ class DashboardController extends Controller
     }
 
     public function clients()
-    {
-        return view('freelancer.clients');
+    {   
+        $freelancer = Auth::user();
+        $connections = $freelancer->freelancerClients()->withCount(['invoices'])->get();
+
+        return view('freelancer.clients')->with(compact('connections'));
     }
 
     public function support()

@@ -5,7 +5,7 @@
     <li class="nav-item">
         <a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#kt_customer_view_overview_events_and_logs_tab">Transections</a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item d-none">
         <a class="nav-link text-active-primary pb-4" data-kt-countup-tabs="true" data-bs-toggle="tab" href="#kt_customer_view_overview_statements">History</a>
     </li>
     <li class="nav-item ms-auto">
@@ -31,7 +31,7 @@
                             </tr>
                             <tr>
                                 <td>Unit</td>
-                                <td>{{ $item->unit }}</td>
+                                <td>{{ $item->unit ?? '-'}}</td>
                             </tr>
                             <tr>
                                 <td>Description</td>
@@ -71,7 +71,7 @@
     <div class="tab-pane fade" id="kt_customer_view_overview_events_and_logs_tab" role="tabpanel">
         <div class="card pt-4 mb-6 mb-xl-9">
             <div class="card-body py-0">
-                <div class="card-header border-0 pt-6">
+                <div class="card-header border-0 pt-6 d-none">
                     <div class="card-title">
                         <div class="d-flex align-items-center position-relative my-1">
                             <i class="ki-outline ki-magnifier fs-3 position-absolute ms-5"></i>
@@ -122,7 +122,7 @@
                         <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
                             <th class="min-w-125px">DATE</th>
                             <th class="min-w-125px">Invoice#</th>
-                            <th class="min-w-125px">Customer Name</th>
+                            <th class="min-w-125px">Client Name</th>
                             <th class="min-w-125px">Quantity Sold</th>
                             <th class="min-w-125px">Price</th>
                             <th class="min-w-125px">Total</th>
@@ -130,29 +130,35 @@
                         </tr>
                         </thead>
                         <tbody class="fw-semibold text-gray-600">
-                        <tr>
-                            <td>
-                                <a href="#" class="text-gray-600 text-hover-primary mb-1">13 Nov, 2024</a>
-                            </td>
-                            <td>
-                                <a href="#" class="text-gray-800 text-hover-primary mb-1">INV-0000023</a>
-                            </td>
-                            <td>
-                                <a href="#" class="text-gray-600 text-hover-primary mb-1">Test</a>
-                            </td>
-                            <td>
-                                <span class="text-gray-600 text-hover-primary mb-1">1.00</span>
-                            </td>
-                            <td data-filter="mastercard">
-                                <span class="text-gray-600 text-hover-primary mb-1">$10.00</span>
-                            </td>
-                            <td>
-                                <span class="text-gray-600 text-hover-primary mb-1">$10.00</span>
-                            </td>
-                            <td class="text-end">
-                                <span class="text-blue-600 text-hover-primary mb-1">Sent</span>
-                            </td>
-                        </tr>
+                            @forelse($item->invoice as $inv)
+                                <tr>
+                                    <td>
+                                        <a href="#" class="text-gray-600 text-hover-primary mb-1">{{ \Carbon\Carbon::parse($inv->created_at)->format('d M, Y') }}</a>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $inv->invoice->invoice_number }}</a>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-gray-600 text-hover-primary mb-1">{{ $inv->invoice->client->name ?? 'N/A' }}</a>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 text-hover-primary mb-1">{{ $inv->quantity }}</span>
+                                    </td>
+                                    <td data-filter="mastercard">
+                                        <span class="text-gray-600 text-hover-primary mb-1">${{ $inv->price }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 text-hover-primary mb-1">${{ $inv->total }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="text-blue-600 text-hover-primary mb-1">Sent</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7">No records found!</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                     <!--end::Table-->

@@ -129,17 +129,16 @@
     <table class="header-table">
         <tr>
             <td class="company-info">
-                <h3>{{ $quote->customer->company_name ?? 'N/A' }}</h3>
+                <h3>{{ $quote->client->name ?? 'N/A' }}</h3>
                 <div class="quote-meta">
-                    <b>{{ $customer_address->state ?? '' }}</b><br>
-                    <b>{{ $customer_address->country ?? '' }}</b><br>
-                    <b>{{ $quote->customer->email ?? '' }}</b>
+                    <b>{{ $quote->client->email ?? '' }}</b><br>
+                    <b>{{ $quote->client->phone ?? '' }}</b>
                 </div>
             </td>
             <td class="quote-title-block">
                 <h1 class="quote-title">QUOTE</h1>
                 <div class="quote-meta">
-                    <b># {{ $quote->quote_id ?? 'N/A' }}</b><br>
+                    <b># {{ $quote->quote_number ?? 'N/A' }}</b><br>
                     <b>Expiry Date: <strong>{{ date('Y-m-d', strtotime($quote->expiry_date)) }}</strong></b>
                 </div>
             </td>
@@ -151,12 +150,11 @@
         <tr>
             <td>
                 <h4 class="section-title">Bill To</h4>
-                <b>{{ $quote->customer->first_name ?? 'N/A' }} {{ $quote->customer->last_name ?? '' }}</b>
+                <b>{{ $quote->client->name ?? 'N/A' }}</b>
             </td>
             <td class="quote-meta quote-title-block">
                 <b>Quote Date:</b> {{  date('Y-m-d', strtotime($quote->quote_date)) ?? 'N/A' }}<br>
                 <b>Reference:</b> {{ $quote->reference ?? 'N/A' }}<br>
-                <b>Terms:</b> {{ $quote->terms ?? 'N/A' }}
             </td>
         </tr>
     </table>
@@ -202,16 +200,12 @@
                 <td>$ {{ $quote->total_discount ?? 0 }}</td>
             </tr>
             <tr>
-                <td>Shipping Fee</td>
-                <td>$ {{ $quote->shipping_charges ?? 0 }}</td>
-            </tr>
-            <tr>
                 <td>Balance Due</td>
-                <td>$ {{ $quote->grand_total }}</td>
+                <td>$ {{ number_format($quote->grand_total,2) }}</td>
             </tr>
             <tr>
                 <td>Total</td>
-                <td>$ {{ number_format($quote->total, 2) }}</td>
+                <td>$ {{ number_format($quote->grand_total, 2) }}</td>
             </tr>
         </table>
     </div>
@@ -219,7 +213,7 @@
     <!-- Notes Section -->
     <div class="notes">
         <h4>Notes</h4>
-        <p>{{ $quote->notes }}</p>
+        <p>{{ $quote->client_notes }}</p>
     </div>
 
     <!-- Terms Section -->

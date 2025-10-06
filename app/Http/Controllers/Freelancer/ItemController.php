@@ -46,7 +46,7 @@ class ItemController extends Controller
 
     public function show($id)
     {
-        $item = Item::find($id);
+        $item = Item::with('invoice.invoice')->find($id);
         $items = Item::where('user_id',Auth::user()->id)->get();
         return view('freelancer.item.show', compact('item','items','id'));
     }
@@ -59,7 +59,7 @@ class ItemController extends Controller
 
     public function render(Request $request)
     {
-        $item = Item::where('id',$request->id)->first();
+        $item = Item::with('invoice.invoice')->where('id',$request->id)->first();
         $html =  view('freelancer.item.render', compact('item'))->render();
 
         return response()->json([

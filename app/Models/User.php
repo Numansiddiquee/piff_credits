@@ -61,4 +61,14 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function freelancerClients()
+    {
+        return $this->hasMany(FreelancerClient::class, 'freelancer_id');
+    }
+
+    public function clientFreelancers()
+    {
+        return $this->hasMany(FreelancerClient::class, 'client_id');
+    }
+
 }

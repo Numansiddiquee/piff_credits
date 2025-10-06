@@ -35,7 +35,10 @@ class InvoiceController extends Controller
 
     public function create()
     {
-        $clients        = User::role('client')->get();
+        // $clients        = User::role('client')->get();
+        $freelancer     = Auth::user();
+        $clients        = $freelancer->freelancerClients()->where('status', 'active')->get();
+
         $invoiceSetting = InvoiceNumberSetting::where('user_id',Auth::user()->id)->first();
         $items          = Item::where('user_id',Auth::user()->id)->get();
         $invoiceNumber  = $this->generateNewInvoiceNumber();
@@ -149,7 +152,10 @@ class InvoiceController extends Controller
     public function edit($id)
     {
         $invoice        = Invoice::find($id);
-        $clients        = User::role('client')->get();
+        // $clients        = User::role('client')->get();
+        $freelancer     = Auth::user();
+        $clients        = $freelancer->freelancerClients()->where('status', 'active')->get();
+        
         $invoiceSetting = InvoiceNumberSetting::where('user_id',Auth::user()->id)->first();
         $items          = Item::where('user_id',Auth::user()->id)->get();
 
@@ -402,9 +408,9 @@ class InvoiceController extends Controller
         $updateInvoice->update();
 
 //      Ledger Entry
-        $transaction = new TransactionService();
-        $transaction_details = $updateInvoice->invoice_number.' -due on '.$updateInvoice->due_date;
-        $transaction->newTransaction($updateInvoice->customer_id, 'Invoice', $transaction_details, $updateInvoice->total, '');
+        // $transaction = new TransactionService();
+        // $transaction_details = $updateInvoice->invoice_number.' -due on '.$updateInvoice->due_date;
+        // $transaction->newTransaction($updateInvoice->customer_id, 'Invoice', $transaction_details, $updateInvoice->total, '');
 
         return back()->with('success', 'Email sent successfully!');
     }

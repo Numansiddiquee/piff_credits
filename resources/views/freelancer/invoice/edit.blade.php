@@ -151,12 +151,14 @@
                                 <div class="row">
                                     <input type="hidden" name="invoice_id" value="{{ $id }}">
                                     <div class="col-md-7 d-flex gap-5 flex-column me-4" title="Enter client name">
-                                        <span class="fs-6 fw-bold text-danger">Client Name*</span>
+                                        <span class="fs-6 fw-bold text-danger">Client Name*
+                                            <p class="text-muted text-sm mb-0 mt-0">You can only choose clients who have accepted your quote.</p>
+                                        </span>
                                         <select id="client-select" name="client_id" aria-label="Client Name" data-control="select2" data-placeholder="Select or add a client" class="form-select form-select-sm">
                                             <option></option>
                                             @foreach($clients as $client)
-                                                <option value="{{ $client->id }}" {{ $client->id == $invoice->client_id ? 'selected' : '' }} data-name="{{ $client->name }}" data-email="{{ $client->email }}" data-type="client">
-                                                    {{ $client->name }} - {{ $client->email }}
+                                                <option value="{{ $client->client->id }}" data-name="{{ $client->client->name }}" data-email="{{ $client->client->email }}" data-type="client">
+                                                    {{ $client->client->name }} - {{ $client->client->email }}
                                                 </option>
                                             @endforeach
                                             <option value="new_client" data-type="new_client">+ New Client</option> <!-- New Client option -->
@@ -256,7 +258,7 @@
                                         </table>
                                         <div class="separator separator-dashed my-5"></div>
                                         <div class="row">
-                                            <div class="col-md-5">
+                                            <div class="col-md-6">
                                                 <div class="d-flex flex-column justify-content-between" style="height:198px">
                                                     <div class="row">
                                                         <div class="d-flex gap-4">
@@ -273,7 +275,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-7">
+                                            <div class="col-md-6">
                                                 <div class="card bg-light">
                                                     <div class="card-body">
                                                         <div class="row ">
@@ -592,7 +594,7 @@
             $('#client-select').on('change', function() {
                 if ($(this).val() === "new_client") {
                     $(this).val(null).trigger('change'); // Reset the select
-                    window.location.href = "{{ route('freelancer.invoice.create_client') }}";
+                    window.location.href = "{{ route('freelancer.client.create_client') }}";
                 }
             });
         });

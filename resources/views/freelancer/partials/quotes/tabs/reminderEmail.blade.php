@@ -10,18 +10,14 @@
         </div>
         <div class="card-body p-0">
             <!--begin::Form-->
-            <form action="{{ route('admin.quote.send.email') }}" id="kt_inbox_reminder_compose_form" method="post" enctype="multipart/form-data">
+            <form action="{{ route('freelancer.quote.send.email') }}" id="kt_inbox_reminder_compose_form" method="post" enctype="multipart/form-data">
                 @csrf
                 <div class="d-block">
                     <div class="d-flex align-items-center border-bottom px-8 min-h-50px">
                         <div class="text-gray-900 fw-bold w-75px">To:</div>
-                        {{--                        <input type="text" class="form-control form-control-transparent border-0" name="to_email" placeholder="Recipient email" />--}}
                         <select class="form-select form-control-transparent border-0 select2" name="to_email[]" data-control="select2" data-placeholder="Recipient email" data-allow-clear="true" multiple="multiple">
                             <option></option>
-                            <option value="{{ $current_quote->customer->email }}" selected>{{ $current_quote->customer->first_name }} {{ $current_quote->customer->last_name }} ({{ $current_quote->customer->email }})</option>
-{{--                            @foreach($invoice->customerContactPersons as $customer)--}}
-{{--                                <option value="{{ $customer->email }}">{{ $customer->first_name }} {{ $customer->last_name }} ({{ $customer->email }})</option>--}}
-{{--                            @endforeach--}}
+                            <option value="{{ $current_quote->client->email }}" selected>{{ $current_quote->client->first_name }} {{ $current_quote->client->last_name }} ({{ $current_quote->client->email }})</option>
                         </select>
                         <div class="ms-auto w-75px text-end">
                             <span class="text-muted cursor-pointer text-hover-primary me-2 emailCc_button" data-target="emailCc">Cc</span>
@@ -31,29 +27,21 @@
 
                     <div class="d-none align-items-center border-bottom px-8 min-h-50px emailCc">
                         <div class="text-gray-900 fw-bold w-75px">Cc:</div>
-                        {{--                        <input type="text" class="form-control form-control-transparent border-0" name="cc_email" placeholder="Cc email" />--}}
                         <select class="form-select form-control-transparent border-0 select2" name="cc_email[]" data-control="select2" data-placeholder="Recipient email" data-allow-clear="true" multiple="multiple">
                             <option></option>
-{{--                            @foreach($invoice->customerContactPersons as $customer)--}}
-{{--                                <option value="{{ $customer->email }}">{{ $customer->first_name }} {{ $customer->last_name }} ({{ $customer->email }})</option>--}}
-{{--                            @endforeach--}}
                         </select>
                     </div>
 
                     <div class="d-none align-items-center border-bottom px-8 min-h-50px emailBcc">
                         <div class="text-gray-900 fw-bold w-75px">Bcc:</div>
-                        {{--                        <input type="text" class="form-control form-control-transparent border-0" name="bcc_email" placeholder="Bcc email" />--}}
                         <select class="form-select form-control-transparent border-0 select2" name="bcc_email[]" data-control="select2" data-placeholder="Recipient email" data-allow-clear="true" multiple="multiple">
                             <option></option>
-{{--                            @foreach($current_quote->customerContactPersons as $customer)--}}
-{{--                                <option value="{{ $customer->email }}">{{ $customer->first_name }} {{ $customer->last_name }} ({{ $customer->email }})</option>--}}
-{{--                            @endforeach--}}
                         </select>
                     </div>
 
                     <!-- Subject -->
                     <div class="border-bottom px-8">
-                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Quote - {{$current_quote->quote_id}} reminder from {{ auth()->user()->company_name }}"/>
+                        <input class="form-control form-control-transparent border-0" name="subject" placeholder="Subject" value="Quote - {{$current_quote->quote_number}} reminder from {{ auth()->user()->name }}"/>
                     </div>
                     <div class="px-8 round-5 border">
                         <div class="text-gray-900 fw-bold w-75px mt-3">Email Body</div>
@@ -62,7 +50,6 @@
                         <input type="hidden" name="model_id" value="{{ $id }}">
                         <input type="hidden" name="source" value="Reminder Email">
                         <!-- Editable Invoice -->
-                        {{--                        <div id="invoiceReminderContent" class="invoice-container editable" contenteditable="true">--}}
                         <textarea id="emailEditorReminder">
                             <div style="background: #fbfbfb; padding: 20px;">
                                 <table style="width: 100%; border-spacing: 0; padding: 0;">
@@ -78,14 +65,14 @@
                                                 </tr>
                                                 <tr>
                                                     <td style="padding: 20px; font-family: Arial, sans-serif; font-size: 14px; color: #555; text-align: left;">
-                                                        <p>Dear {{ $current_quote->customer->first_name }},</p>
+                                                        <p>Dear {{ $current_quote->client->fname }},</p>
                                                         <p>We hope you're doing well. This is a friendly reminder regarding your quote. Please review the details below and let us know your decision:</p>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td style="text-align: center; padding-bottom: 20px;">
                                                         <h2 style="font-family: Arial, sans-serif; font-size: 22px; color: #333; font-weight: bold;">
-                                                            Quote #{{ $current_quote->quote_id }}
+                                                            Quote #{{ $current_quote->quote_number }}
                                                         </h2>
                                                         <p style="font-family: Arial, sans-serif; font-size: 14px; color: #555;">
                                                             Issued on: {{ $current_quote->created_at->format('d M, Y') ?? 'N/A' }}

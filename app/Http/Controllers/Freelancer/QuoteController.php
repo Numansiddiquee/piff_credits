@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Freelancer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FreelancerClient;
+use App\Mail\QuoteStatusMail;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Item;
@@ -19,10 +20,12 @@ use App\Models\User;
 use App\Services\LogService;
 use App\Services\EmailService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use GeoIp2\WebService\Client;
 use Illuminate\View\View;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Crypt;
 
 class QuoteController extends Controller
 {
@@ -496,5 +499,84 @@ class QuoteController extends Controller
 
 
         return back()->with('success', 'Email sent successfully!');
+    }
+
+    public function acceptQuote($hash)
+    {
+        try {
+            $quoteId = Crypt::decryptString($hash);
+            $quote = Quote::findOrFail($quoteId);
+
+            // if ($quote->status === 'Accepted') {
+            //     return redirect()->route('quotes.status', $hash)
+            //         ->with('info', 'This quote has already been accepted.');
+            // }
+
+            $quote->status = 'Accepted';
+            $quote->save();
+
+            $connection = FreelancerClient::firstOrCreate(
+                [
+                    'freelancer_id' => $quote->user_id,
+                    'client_id'     => $quote->client_id,
+                ],
+                [
+                    'status'       => 'active',
+                    'connected_at' => now(),
+                ]
+            );
+
+            if ($connection->status !== 'active') {
+                $connection->status = 'active';
+                $connection->connected_at = now();
+                $connection->save();
+            }
+
+            $freelancer = $quote->freelancer;
+            Mail::to($freelancer->email)->send(new QuoteStatusMail($quote, 'accepted'));
+
+            return redirect()->route('quotes.status', $hash)
+                ->with('success', 'Thank you! You have accepted the quote.');
+
+        } catch (\Exception $e) {
+            return abort(404, 'Invalid or expired link.');
+        }
+    }
+
+    public function rejectQuote($hash)
+    {
+        try {
+            $quoteId = Crypt::decryptString($hash);
+            $quote = Quote::findOrFail($quoteId);
+
+            if ($quote->status === 'Rejected') {
+                return redirect()->route('quotes.status', $hash)
+                    ->with('info', 'This quote has already been rejected.');
+            }
+
+            $quote->status = 'Rejected';
+            $quote->save();
+
+            $freelancer = $quote->freelancer; 
+            Mail::to($freelancer->email)->send(new QuoteStatusMail($quote, 'rejected'));
+
+            return redirect()->route('quotes.status', $hash)
+                ->with('success', 'You have rejected the quote. If you change your mind, please contact us.');
+
+        } catch (\Exception $e) {
+            return abort(404, 'Invalid or expired link.');
+        }
+    }
+
+    public function showQuoteStatus($hash)
+    {
+        try {
+            $quoteId = Crypt::decryptString($hash);
+            $quote = Quote::findOrFail($quoteId);
+
+            return view('quote_status', compact('quote'));
+        } catch (\Exception $e) {
+            return abort(404, 'Invalid or expired link.');
+        }
     }
 }

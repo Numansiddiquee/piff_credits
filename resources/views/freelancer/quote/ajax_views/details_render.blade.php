@@ -62,13 +62,13 @@
                 </div>
             </li>
             <li class="nav-item activeLink">
-                @if($current_quote->status !== 'draft')
-                    <a href="#" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2">
+                @if($current_quote->status == 'Accepted')
+                    <a href="{{ route('freelancer.quote.convert_to_invoice',$current_quote->id) }}" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2">
                         <i class="bi bi-receipt"></i>
                         Convert To Invoice
                     </a>
                 @else
-                    <a href="{{ route('freelancer.quote.convert_to_invoice',$current_quote->id) }}" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2">
+                    <a href="#" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2">
                         <i class="bi bi-receipt"></i>
                         Convert To Invoice
                     </a>

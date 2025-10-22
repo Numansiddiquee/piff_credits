@@ -54,8 +54,8 @@
                                 $statusClasses = [
                                     'Draft'       => 'badge badge-secondary',
                                     'Accepted'    => 'badge badge-success',
-                                    'Rejected'    => 'badge badge-danger',
-                                    'Not Answered'=> 'badge badge-warning',
+                                    'Declined'    => 'badge badge-danger',
+                                    'awaiting_review'=> 'badge badge-warning',
                                 ];
 
                                 $statusClass = $statusClasses[$quote->status] ?? 'badge badge-light';
@@ -67,9 +67,8 @@
                                 style="box-shadow: 0px 7px 15px rgba(0, 0, 0, 0.1)">
                                 <div class="d-flex flex-column fs-4 fw-bold text-gray-700">
                                     <b class="fw-bold">{{ $quote->client->name }}</b>
-                                    <span
-                                        class="text-muted fs-8 mt-1 mb-2">{{$quote->quote_number.' . '.date('Y-m-d',strtotime($quote->quote_date))}}</span>
-                                    <span class="{{ $statusClass }}  w-auto"> {{ $quote->status }} </span>
+                                    <span class="text-muted fs-8 mt-1 mb-2">{{$quote->quote_number.' . '.date('Y-m-d',strtotime($quote->quote_date))}}</span>
+                                    <span class="{{ $statusClass }} w-auto"> {{ $quote->status }} </span>
                                 </div>
                                 <div class="fw-bold">${{number_format($quote->grand_total,2)}}</div>
                             </div>

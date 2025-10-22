@@ -157,7 +157,7 @@
                                         <select id="client-select" name="client_id" aria-label="Client Name" data-control="select2" data-placeholder="Select or add a client" class="form-select form-select-sm">
                                             <option></option>
                                             @foreach($clients as $client)
-                                                <option value="{{ $client->client->id }}" data-name="{{ $client->client->name }}" data-email="{{ $client->client->email }}" data-type="client">
+                                                <option value="{{ $client->client->id }}" {{ $client->client->id  == $invoice->client_id ? 'selected' : '' }} data-name="{{ $client->client->name }}" data-email="{{ $client->client->email }}" data-type="client">
                                                     {{ $client->client->name }} - {{ $client->client->email }}
                                                 </option>
                                             @endforeach
@@ -234,7 +234,7 @@
                                                                     </div>
                                                                 @endforeach
                                                                 <div class="dropdown-divider"></div>
-                                                                <div class="dropdown-item text-primary" onclick="addNewItem()">+ Add New Item</div>
+                                                                <div class="dropdown-item text-primary cursor-pointer" onclick="addNewItem()">+ Add New Item</div>
                                                             </div>
                                                             <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]" value="{{ $item->item_id }}"/>
                                                             <input type="text" class="form-control form-control-sm item-description" name="description[]" value="{{ $item->description }}" placeholder="Description" />
@@ -420,6 +420,10 @@
         function addNewItemRow() {
             const template = document.getElementById('item-template').content.cloneNode(true);
             document.getElementById('itemTableBody').appendChild(template);
+        }
+
+        function addNewItem() {
+            window.location.href = "{{ route('freelancer.item.create') }}"
         }
 
         function removeItem(button) {

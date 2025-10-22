@@ -62,8 +62,8 @@
                                                          style="border-left-color: #1b84ff; border-left-style: solid!important;left:99px;"></div>
                                                     <div class="timeline-content card p-4 shadow-sm">
                                                         <div class="card-body p-2">
-                                                            <div
-                                                                class="mb-5 fw-light fs-5">{{ $comment->log_comment_text }}</div>
+                                                            <b class="mt-3">{{ $comment->log_title }}</b>
+                                                            <div class="mb-5 fw-light fs-5">{{ $comment->log_comment_text }}</div>
                                                             <b class="mt-3">by {{ $comment->user->name }}</b>
                                                         </div>
                                                     </div>

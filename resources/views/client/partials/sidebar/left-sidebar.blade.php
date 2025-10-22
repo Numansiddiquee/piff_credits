@@ -22,8 +22,8 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a href="{{ route('client.items') }}" class="menu-link">
-                        <span class="menu-icon">
+                    <a href="{{ route('client.items') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.item')) active @endif">
+                        <span class="menu-icon"> 
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
                         <span class="menu-title">Items</span>
@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('client.quotes') }}" class="menu-link">
+                    <a href="{{ route('client.quotes') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.quote')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('client.invoices') }}" class="menu-link">
+                    <a href="{{ route('client.invoices') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.invoice')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-cheque fs-2"></i>
                         </span>
@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('client.payments') }}" class="menu-link">
+                    <a href="{{ route('client.payments') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.payment')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-book-square fs-2"></i>
                         </span>
@@ -57,7 +57,7 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a href="{{ route('client.kyb') }}" class="menu-link">
+                    <a href="{{ route('client.kyb') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.kyb')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-shield-tick fs-2"></i>
                         </span>
@@ -67,7 +67,7 @@
                 
                 <!-- Deposit / Withdraw -->
                 <div class="menu-item">
-                    <a href="{{ route('client.transactions') }}" class="menu-link">
+                    <a href="{{ route('client.transactions') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.transaction')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-wallet fs-2"></i>
                         </span>
@@ -77,7 +77,7 @@
 
                 <!-- Deposit & Withdrawal History -->
                 <div class="menu-item">
-                    <a href="{{ route('client.transaction-history') }}" class="menu-link">
+                    <a href="{{ route('client.transaction-history') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.transaction-history')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-time fs-2"></i>
                         </span>
@@ -87,7 +87,7 @@
 
                 <!-- Support Tickets -->
                 <div class="menu-item">
-                    <a href="{{ route('client.support') }}" class="menu-link">
+                    <a href="{{ route('client.support') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'client.support')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-message-text fs-2"></i>
                         </span>

@@ -243,9 +243,10 @@
                                                             </div>
                                                         @endforeach
                                                         <div class="dropdown-divider"></div>
-                                                        <div class="dropdown-item text-primary" onclick="addNewItem()">+ Add New Item</div>
+                                                        <div class="dropdown-item text-primary cursor-pointer" onclick="createNewItemMode(this)">+ Create New Item</div>
                                                     </div>
                                                     <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]"/>
+                                                    <input type="hidden" name="is_new[]" value="0" class="item-is-new" />
                                                     <input type="text" class="form-control form-control-sm item-description" name="description[]" placeholder="Description" />
                                                 </td>
                                                 <td class="ps-0">
@@ -341,9 +342,10 @@
                                                         </div>
                                                     @endforeach
                                                     <div class="dropdown-divider"></div>
-                                                    <div class="dropdown-item text-primary" onclick="addNewItem()">+ Add New Item</div>
+                                                    <div class="dropdown-item text-primary" onclick="createNewItemMode(this)">+ Create New Item</div>
                                                 </div>
                                                 <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]"/>
+                                                <input type="hidden" name="is_new[]" value="0" class="item-is-new" />
                                                 <input type="text" class="form-control form-control-sm item-description" name="description[]" placeholder="Description" />
                                             </td>
                                             <td class="ps-0">
@@ -398,21 +400,38 @@
     <script src="{{asset('metronic/assets/js/custom/apps/invoices/create_new.js')}}"></script>
 
     <script>
-
         function toggleDropdown(element) {
             document.querySelectorAll('.dropdown-menu').forEach(menu => menu.style.display = 'none');
             const dropdown = element.nextElementSibling;
             dropdown.style.display = 'block';
         }
 
-        function selectItem(dropdownItem, name, price,id,description) {
+        function selectItem(dropdownItem, name, price, id, description) {
             const row = dropdownItem.closest('tr');
-            row.querySelector('.item-name').value = name;
+            const nameInput = row.querySelector('.item-name');
+            nameInput.value = name;
+            nameInput.readOnly = true;  // Lock for existing
             row.querySelector('.item-id').value = id;
+            row.querySelector('.item-is-new').value = 0;
             row.querySelector('.item-description').value = description;
             row.querySelector('[name="price[]"]').value = price.toFixed(2);
             updateRowTotal(row.querySelector('[name="price[]"]'));
             dropdownItem.closest('.dropdown-menu').style.display = 'none';
+        }
+
+        function createNewItemMode(dropdownItem) {
+            const row = dropdownItem.closest('tr');
+            const nameInput = row.querySelector('.item-name');
+            nameInput.value = '';
+            nameInput.readOnly = false;
+            nameInput.placeholder = 'Type new item name here';
+            row.querySelector('.item-id').value = '';
+            row.querySelector('.item-is-new').value = 1;
+            row.querySelector('.item-description').value = '';
+            row.querySelector('[name="price[]"]').value = '0.00';
+            updateRowTotal(row.querySelector('[name="price[]"]'));
+            dropdownItem.closest('.dropdown-menu').style.display = 'none';
+            nameInput.focus();  // Auto-focus for typing
         }
 
         document.addEventListener('click', function(event) {
@@ -423,7 +442,17 @@
 
         function addNewItemRow() {
             const template = document.getElementById('item-template').content.cloneNode(true);
+            const row = template.querySelector('tr');
+            const nameInput = row.querySelector('.item-name');
+            nameInput.readOnly = false;  // New row starts editable
+            nameInput.placeholder = 'Type new item name or click to select';
+            row.querySelector('.item-id').value = '';
+            row.querySelector('.item-is-new').value = 1;
+            row.querySelector('.item-description').value = '';
+            row.querySelector('[name="price[]"]').value = '0.00';
+            row.querySelector('[data-kt-element="total"]').innerText = '0.00';
             document.getElementById('itemTableBody').appendChild(template);
+            updateTotals();
         }
 
         function removeItem(button) {
@@ -432,63 +461,45 @@
             updateTotals();
         }
 
-        function updateRowTotal(priceInput) {
-            const row = priceInput.closest('tr');
-            const quantity = row.querySelector('[name="quantity[]"]').value;
-            const price = row.querySelector('[name="price[]"]').value;
+        function updateRowTotal(element) {
+            const row = element.closest('tr');
+            const quantity = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+            const price = parseFloat(row.querySelector('[name="price[]"]').value) || 0;
             const total = (quantity * price).toFixed(2);
             row.querySelector('[data-kt-element="total"]').innerText = total;
-
             updateTotals();
         }
 
         function updateTotals() {
             let subtotal = 0;
-
-            // Calculate the subtotal by summing up individual totals
-            const totals = document.querySelectorAll('[data-kt-element="total"]');
-            totals.forEach(totalElement => {
+            document.querySelectorAll('[data-kt-element="total"]').forEach(totalElement => {
                 subtotal += parseFloat(totalElement.innerText) || 0;
             });
-
-            // Update the displayed subtotal
             document.querySelector('[data-kt-element="sub-total"]').innerText = subtotal.toFixed(2);
+            document.getElementById('subtotal').value = subtotal.toFixed(2);
 
-            // Get discount and type
             const discount = parseFloat(document.getElementById("discount").value) || 0;
             const discountType = document.getElementById("discount-type").value;
-
-            // Calculate discount amount
             let discountAmount = 0;
             if (discountType === "%") {
                 discountAmount = (subtotal * discount) / 100;
             } else {
                 discountAmount = discount;
             }
-            if(discountAmount > 0){
-                $('#discount-total').text('- $ '+discountAmount);
-            }else{
-                $('#discount-total').text(discountAmount);
+            if (discountAmount > 0) {
+                document.getElementById('discount-total').innerText = '- $ ' + discountAmount.toFixed(2);
+            } else {
+                document.getElementById('discount-total').innerText = discountAmount.toFixed(2);
             }
+            document.getElementById('discount-total-amount').value = discountAmount.toFixed(2);
 
-            $('#discount-total-amount').val(discountAmount);
-
-            // Get shipping charges
-            // const shipping = parseFloat(document.getElementById("shipping").value) || 0;
-            // $('#shipping-total').text(shipping);
-            // Calculate grand total
             let grandTotal = subtotal - discountAmount;
-            grandTotal = grandTotal < 0 ? 0 : grandTotal; // Ensure no negative total
-
-            // Update the displayed grand total
+            grandTotal = grandTotal < 0 ? 0 : grandTotal;
             document.querySelector('[data-kt-element="grand-total"]').innerText = grandTotal.toFixed(2);
         }
 
-        // Call updateTotals whenever any relevant field changes
         document.getElementById("discount").addEventListener("input", updateTotals);
         document.getElementById("discount-type").addEventListener("change", updateTotals);
-        // document.getElementById("shipping").addEventListener("input", updateTotals);
-
     </script>
 
     <script>
@@ -502,52 +513,51 @@
                 "timeOut": "3000"
             };
 
-            // Validation rules for required fields
             const customerSelect = form.querySelector('select[name="client_id"]');
             const invoiceNumber = form.querySelector('input[name="invoice_number"]');
             const invoiceDate = form.querySelector('input[name="invoice_date"]');
             const dueDate = form.querySelector('input[name="invoice_due_date"]');
 
-            // Reset border colors (optional)
             [customerSelect, invoiceNumber, invoiceDate, dueDate].forEach(field => {
                 field.classList.remove('is-invalid');
             });
 
-            // Check if customer is selected
             if (!customerSelect.value) {
                 isValid = false;
                 customerSelect.classList.add('is-invalid');
                 toastr.error('Customer Name is required.');
             }
 
-            // Check if invoice number is filled
             if (!invoiceNumber.value.trim()) {
                 isValid = false;
                 invoiceNumber.classList.add('is-invalid');
                 toastr.error('Invoice Number is required.');
             }
 
-            // Check if invoice date is filled
             if (!invoiceDate.value.trim()) {
                 isValid = false;
                 invoiceDate.classList.add('is-invalid');
                 toastr.error('Invoice Date is required.');
             }
 
-            // Check if due date is filled
             if (!dueDate.value.trim()) {
                 isValid = false;
                 dueDate.classList.add('is-invalid');
                 toastr.error('Due Date is required.');
             }
 
-            const itemRows = form.querySelectorAll('#itemTableBody tr[data-kt-element="item"]'); // Adjust selector as needed
+            const itemRows = form.querySelectorAll('#itemTableBody tr[data-kt-element="item"]');
             let hasValidItem = false;
 
             itemRows.forEach(row => {
-                const itemName = row.querySelector('.item-name');
-                if (itemName && itemName.value.trim() !== '') {
+                const itemName = row.querySelector('.item-name').value.trim();
+                const price = parseFloat(row.querySelector('[name="price[]"]').value) || 0;
+                const quantity = parseFloat(row.querySelector('[name="quantity[]"]').value) || 0;
+                if (itemName && price > 0 && quantity > 0) {
                     hasValidItem = true;
+                } else if (itemName || price > 0 || quantity > 0) {
+                    isValid = false;
+                    toastr.error('Incomplete item: Name, price, and quantity are required for each added item.');
                 }
             });
 
@@ -556,7 +566,6 @@
                 toastr.error('At least one valid item is required.');
             }
 
-            // If all validations pass, submit the form
             if (isValid) {
                 toastr.success('Form is valid. Submitting...');
                 form.submit();
@@ -574,7 +583,7 @@
             });
 
             function formatCustomer(option) {
-                if (!option.id) return option.text; // Placeholder case
+                if (!option.id) return option.text;
 
                 const type = $(option.element).data('type');
 
@@ -586,29 +595,27 @@
                 const email = $(option.element).data('email');
 
                 return `
-                            <div class="select2-client-option">
-                                <div class="select2-client-initials">${name.charAt(0)}</div>
-                                <div class="select2-client-details">
-                                    <div class="select2-client-name">${name}</div>
-                                    <div class="select2-client-email">${email}</div>
-                                </div>
-                            </div>
-                        `;
+                    <div class="select2-client-option">
+                        <div class="select2-client-initials">${name.charAt(0)}</div>
+                        <div class="select2-client-details">
+                            <div class="select2-client-name">${name}</div>
+                            <div class="select2-client-email">${email}</div>
+                        </div>
+                    </div>
+                `;
             }
 
             $('#client-select').on('change', function() {
                 if ($(this).val() === "new_client") {
-                    $(this).val(null).trigger('change'); // Reset the select
+                    $(this).val(null).trigger('change');
                     window.location.href = "{{ route('freelancer.client.create_client') }}";
                 }
             });
         });
 
         $(document).ready(function() {
-            // Initially, show the auto-generate settings
             $("#autoGenerateSettings").show();
 
-            // Toggle the visibility of the input fields when a radio button is clicked
             $("input[name='invoiceNumberMode']").on('change', function() {
                 if ($(this).val() === "auto") {
                     $('#textAccordingSetting').html("<p>Your invoice numbers are set on auto-generate mode to save your time.</p><p>Are you sure about changing this setting?</p>");
@@ -622,7 +629,6 @@
 
         $(document).ready(function() {
             $('#saveSettings').click(function() {
-
                 var isAutoGenerate = $("input[name='invoiceNumberMode']:checked").val() === 'auto';
                 var prefix = $('#prefix').val();
                 var nextNumber = $('#nextNumber').val();
@@ -638,7 +644,6 @@
                     },
                     success: function(response) {
                         toastr.success(response.success, 'Success');
-                        // Optionally, reload the page after a delay
                         setTimeout(function() {
                             location.reload();
                         }, 1000);
@@ -649,22 +654,17 @@
                 });
             });
         });
-
     </script>
 
-    //Bulk Items modal
     <script>
-
         let selectedItems = {};
 
         function toggleSelection(element, itemName, itemRate, itemId, ItemDescription) {
             if (selectedItems[itemName]) {
-                // Item already selected, unselect it
                 delete selectedItems[itemName];
                 element.classList.remove('selected');
             } else {
-                // Select the item
-                selectedItems[itemName] = { rate: itemRate, quantity: 1 , itemId: itemId,ItemDescription:ItemDescription };
+                selectedItems[itemName] = { rate: itemRate, quantity: 1 , itemId: itemId, ItemDescription: ItemDescription };
                 element.classList.add('selected');
             }
             updateSelectedItemsUI();
@@ -672,31 +672,25 @@
 
         function updateSelectedItemsUI() {
             const selectedItemsList = document.getElementById('selectedItemsList');
-            selectedItemsList.innerHTML = ''; // Clear previous selected items
-
-            // Update the count of selected items
+            selectedItemsList.innerHTML = '';
             document.getElementById('selectedCount').textContent = `(${Object.keys(selectedItems).length})`;
 
             Object.keys(selectedItems).forEach(itemName => {
                 const item = selectedItems[itemName];
-
                 const listItem = document.createElement('li');
                 listItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
-
                 listItem.innerHTML = `
-            <span>${itemName}</span>
-            <div class="quantity-controls">
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="decreaseQuantity('${itemName}')">-</button>
-                <span>${item.quantity}</span>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="increaseQuantity('${itemName}')">+</button>
-            </div>
-        `;
-
+                    <span>${itemName}</span>
+                    <div class="quantity-controls">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="decreaseQuantity('${itemName}')">-</button>
+                        <span>${item.quantity}</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="increaseQuantity('${itemName}')">+</button>
+                    </div>
+                `;
                 selectedItemsList.appendChild(listItem);
             });
         }
 
-        // Functions to increase or decrease quantity
         function increaseQuantity(itemName) {
             selectedItems[itemName].quantity++;
             updateSelectedItemsUI();
@@ -706,50 +700,46 @@
             if (selectedItems[itemName].quantity > 1) {
                 selectedItems[itemName].quantity--;
             } else {
-                // Remove item if quantity goes to zero
                 delete selectedItems[itemName];
                 document.querySelector(`.product-list .list-group-item[data-item-name="${itemName}"]`).classList.remove('selected');
             }
             updateSelectedItemsUI();
         }
 
-        // Confirm selected items and add to main item list
         function confirmSelectedItems() {
             const itemTableBody = document.getElementById('itemTableBody');
 
             Object.keys(selectedItems).forEach(itemName => {
                 const item = selectedItems[itemName];
-
                 const row = document.createElement('tr');
                 row.classList.add('border-bottom', 'border-bottom-dashed');
-
                 row.innerHTML = `
-                                    <td class="pe-7">
-                                        <input type="text" class="form-control form-control-sm mb-2 item-name" name="name[]" value="${itemName}" readonly />
-                                        <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]" value="${item.itemId}" />
-                                        <input type="text" class="form-control form-control-sm" name="description[]"  value="${item.ItemDescription}" placeholder="Description" />
-                                    </td>
-                                    <td class="ps-0">
-                                        <input class="form-control form-control-sm" type="number" min="1" name="quantity[]" value="${item.quantity}" readonly />
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-sm text-end" name="price[]" value="${item.rate.toFixed(2)}" readonly />
-                                    </td>
-                                    <td class="pt-8 text-end text-nowrap">$<span data-kt-element="total">${(item.rate * item.quantity).toFixed(2)}</span></td>
-                                    <td class="pt-5 text-end">
-                                        <button type="button" class="btn btn-sm btn-icon btn-active-color-primary" onclick="removeItem(this)">
-                                            <i class="ki-outline ki-trash fs-3"></i>
-                                        </button>
-                                    </td>
-                                `;
-
+                    <td class="pe-7">
+                        <input type="text" class="form-control form-control-sm mb-2 item-name" name="name[]" value="${itemName}" readonly />
+                        <input type="hidden" class="form-control form-control-sm mb-2 item-id" name="id[]" value="${item.itemId}" />
+                        <input type="hidden" name="is_new[]" value="0" class="item-is-new" />
+                        <input type="text" class="form-control form-control-sm" name="description[]"  value="${item.ItemDescription}" placeholder="Description" />
+                    </td>
+                    <td class="ps-0">
+                        <input class="form-control form-control-sm" type="number" min="1" name="quantity[]" value="${item.quantity}" onchange="updateRowTotal(this)" />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm text-end" name="price[]" value="${item.rate.toFixed(2)}" onchange="updateRowTotal(this)" />
+                    </td>
+                    <td class="pt-8 text-end text-nowrap">$<span data-kt-element="total">${(item.rate * item.quantity).toFixed(2)}</span></td>
+                    <td class="pt-5 text-end">
+                        <button type="button" class="btn btn-sm btn-icon btn-active-color-primary" onclick="removeItem(this)">
+                            <i class="ki-outline ki-trash fs-3"></i>
+                        </button>
+                    </td>
+                `;
                 itemTableBody.appendChild(row);
             });
 
-            // Reset selected items and close modal
             selectedItems = {};
             updateSelectedItemsUI();
             $('#bulkAddModal').modal('hide');
+            updateTotals();
         }
 
         document.querySelector('input[name="attachments[]"]').addEventListener('change', function () {
@@ -758,11 +748,8 @@
 
             if (fileCount > 3) {
                 toastr.error('You can upload a maximum of 3 files.');
-                this.value = ''; // Reset input
+                this.value = '';
             }
         });
-
-
-
     </script>
 @endsection

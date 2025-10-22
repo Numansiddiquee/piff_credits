@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Client\DashboardController;
+use App\Http\Controllers\Client\QuoteController;
+use App\Http\Controllers\Client\InvoiceController;
 use App\Http\Controllers\Client\SettingController;
 use App\Http\Controllers\Client\VerificationRequestController;
 
@@ -23,6 +25,19 @@ Route::middleware(['auth', 'role:Client','2fa'])->group(function () {
         Route::get('/transaction-history', [DashboardController::class, 'transactionHistory'])->name('transaction-history');
         Route::get('/accounting', [DashboardController::class, 'accounting'])->name('accounting');
         Route::get('/support', [DashboardController::class, 'support'])->name('support');
+    });
+
+    Route::group(['prefix' => 'client/invoice', 'as' => 'client.invoice.'],function (){
+        Route::get('/view/{id?}',[InvoiceController::class,'view'])->name('view');
+        Route::post('/add-comment', [InvoiceController::class, 'add_comment'])->name('add_comment');
+    });
+
+    Route::group(['prefix' => 'client/quote', 'as' => 'client.quote.'],function (){
+        Route::get('/view/{id?}',[QuoteController::class,'view'])->name('view');
+        Route::post('/update-status', [QuoteController::class, 'updateStatus'])->name('update_status');
+        Route::post('/add-comment', [QuoteController::class, 'addComment'])->name('add_comment');
+        Route::get('/awaiting-count', [QuoteController::class, 'getAwaitingCount'])->name('awaiting_count');
+        Route::get('/awaiting', [QuoteController::class, 'awaitingQuotes'])->name('awaiting');
     });
 
     Route::group(['prefix' => 'client/company', 'as' => 'client.company.profile.'], function () {

@@ -1,6 +1,10 @@
 @extends('layouts.custom.admin')
 @section('admin-css')
-
+<style>
+    .pagination-info, .pagination-summary, .text-muted {
+	    display: none !important;
+	}
+</style>
 @endsection
 
 @section('admin-content')
@@ -52,8 +56,9 @@
 				            </th>
 				            <th>User</th>
 				            <th>Role</th>
-				            <th>Email</th>
-				            <th>Verification Status</th>
+				            <th>Company</th>
+				            <th>Phone</th>
+				            <th>Accoutn Type</th>
 				            <th>Joined</th>
 				        </tr>
 				    </thead>
@@ -85,20 +90,12 @@
 				                        {{ $user->user_type ? ucfirst($user->user_type) : 'Super Admin' }}
 				                    </span>
 				                </td>
-				                <td>{{ $user->email }}</td>
+				                <td>{{ $user->company_name ?? '-' }}</td>
 				                <td>
-				                    @php
-				                        $status = optional($user->latestVerification)->status ?? 'unverified';
-				                        $badgeColors = [
-				                            'unverified' => 'secondary',
-				                            'pending' => 'info',
-				                            'verified' => 'success',
-				                            'rejected' => 'danger'
-				                        ];
-				                    @endphp
-				                    <span class="badge badge-light-{{ $badgeColors[$status] ?? 'secondary' }}">
-				                        {{ ucfirst($status) }}
-				                    </span>
+				                    {{ $user->phone }}
+				                </td>
+				                <td class="text-capitalize"> 
+				                    {{ $user->login_type }}
 				                </td>
 				                <td>{{ $user->created_at->format('M d, Y') }}</td>
 				            </tr>
@@ -107,7 +104,9 @@
 				    <!--end::Table body-->
 				</table>
 
-
+				<div class="d-flex justify-content-end mt-4">
+				    {{ $users->links('pagination::bootstrap-5') }}
+				</div>
                 <!--end::Table-->
             </div>
             <!--end::Table container-->

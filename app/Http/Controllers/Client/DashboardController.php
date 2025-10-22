@@ -5,6 +5,12 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\KybDocument;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
+use App\Models\Quote;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -15,17 +21,36 @@ class DashboardController extends Controller
 
     public function items()
     {
-        return view('client.items');
+        $clientId = auth()->id();
+
+        $items = InvoiceItem::join('invoices', 'invoice_items.invoice_id', '=', 'invoices.id')
+                                ->where('invoices.client_id', $clientId)
+                                ->select(
+                                    'invoice_items.item_id',
+                                    'invoice_items.item_name',
+                                    'invoice_items.description',
+                                    'invoice_items.price',
+                                    DB::raw('COUNT(invoice_items.item_id) as usage_count'),
+                                    DB::raw('SUM(invoice_items.quantity) as total_quantity'),
+                                    DB::raw('SUM(invoice_items.total) as total_spent')
+                                )
+                                ->groupBy('invoice_items.item_id', 'invoice_items.item_name', 'invoice_items.description', 'invoice_items.price')
+                                ->orderByDesc('usage_count')
+                                ->get();
+
+        return view('client.items', compact('items'));
     }
 
     public function quotes()
     {
-        return view('client.quotes');
+        $quotes = Quote::with('freelancer')->where('client_id', Auth::user()->id)->get();
+        return view('client.quotes')->with(compact('quotes'));
     }
 
     public function invoices()
-    {
-        return view('client.invoices');
+    {   
+        $invoices  = Invoice::with('freelancer')->where('client_id',Auth::user()->id)->get();
+        return view('client.invoices')->with(compact('invoices'));
     }
 
     public function payments()

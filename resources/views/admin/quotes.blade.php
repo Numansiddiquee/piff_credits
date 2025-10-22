@@ -58,14 +58,13 @@
                         <th class="min-w-120px text-gray-900">Date</th>
                         <th class="min-w-120px text-gray-900">Quote Status</th>
                         <th class="min-w-120px text-gray-900">Total</th>
-                        <th class="min-w-100px text-end text-gray-900">Actions</th>
                     </tr>
                     </thead>
                     <!--end::Table head-->
                     <!--begin::Table body-->
                     <tbody>
                         @forelse($quotes as $quote)
-                            <tr class="clickable_table_row" data-href="{{ route('admin.quote.view_quote',$quote->id) }}">
+                            <tr class="clickable_table_row" data-href="{{ route('admin.quote.view',$quote->id) }}">
                                 <td>
                                     <div class="form-check form-check-sm form-check-custom form-check-solid">
                                         <input class="form-check-input widget-13-check" type="checkbox" value="1">
@@ -73,29 +72,38 @@
                                 </td>
                                 <td>
                                     <span
-                                       class="text-gray-600 fs-6">{{$quote->quote_id}}</span>
+                                       class="text-gray-600 fs-6">{{ $quote->quote_number }}</span>
                                 </td>
                                 <td>
                                     <span
-                                       class="text-gray-600 d-block mb-1 fs-6">{{$quote->reference}}</span>
+                                       class="text-gray-600 d-block mb-1 fs-6">{{ $quote->reference }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-gray-600 d-block mb-1 fs-6">{{$quote->customer->first_name.' '. $quote->customer->last_name}}</span>
+                                    <span class="text-gray-600 d-block mb-1 fs-6">{{ $quote->client->name }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-gray-600 d-block mb-1 fs-6">{{$quote->freelancer->first_name.' '. $quote->freelancer->last_name}}</span>
+                                    <span class="text-gray-600 d-block mb-1 fs-6">{{ $quote->freelancer->name }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-gray-600 d-block mb-1 fs-6">{{ $quote->quote_date }}</span>
+                                    <span class="text-gray-600 d-block mb-1 fs-6">{{ \Carbon\Carbon::parse($quote->quote_date)->format('d M, Y') }}</span>
                                 </td>
-                                <td class="text-gray-600 fs-6">{{ $quote->status }}</td>
+                                <td class="text-gray-600 fs-6">
+                                    @php
+                                        $status = $quote->status;
+                                        $badges = [
+                                            'Draft' => 'badge-light-secondary',
+                                            'Accepted' => 'badge-light-success',
+                                            'Declined' => 'badge-light-danger',
+                                            'Converted To Invoice' => 'badge-light-primary',
+                                        ];
+                                        $badgeClass = $badges[$status] ?? 'badge-light-info';
+                                    @endphp
+
+                                    <span class="badge fw-semibold {{ $badgeClass }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </td>
                                 <td class="text-gray-600 fs-6">{{ "$ ".$quote->grand_total }}</td>
-                                <td class="text-end">
-                                    <a href="{{ route('admin.quote.edit_quote',$quote->id) }}"
-                                       class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-                                        <i class="ki-outline ki-pencil fs-2"></i>
-                                    </a>
-                                </td>
                             </tr>
                         
                         @empty

@@ -23,7 +23,7 @@
                        class="btn btn-flex btn-outline btn-color-gray-700 btn-active-color-primary bg-body h-40px fs-7 fw-bold d-none"
                        data-bs-toggle="modal" data-bs-target="#kt_modal_view_users">Add Member</a>
                     <a href="#"
-                       class="btn btn-flex btn-primary h-40px fs-7 fw-bold">New Quote</a>
+                       class="btn btn-flex btn-primary h-40px fs-7 fw-bold d-none">New Quote</a>
                 </div>
                 <!--end::Actions-->
             </div>
@@ -36,90 +36,6 @@
 
 
     <div class="card mb-5 mb-xl-8">
-        <!--begin::Header-->
-        <div class="card-header border-0 pt-5 d-none">
-            <h3 class="card-title align-items-start flex-column">
-                <span class="card-label fw-bold fs-3 mb-1">Recent Orders</span>
-                <span class="text-muted mt-1 fw-semibold fs-7">Over 500 orders</span>
-            </h3>
-            <div class="card-toolbar">
-                <!--begin::Menu-->
-                <button type="button" class="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
-                        data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-                    <i class="ki-outline ki-category fs-6"></i>
-                </button>
-                <!--begin::Menu 2-->
-                <div
-                    class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-semibold w-200px"
-                    data-kt-menu="true">
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3">
-                        <div class="menu-content fs-6 text-gray-900 fw-bold px-3 py-4">Quick Actions</div>
-                    </div>
-                    <!--end::Menu item-->
-                    <!--begin::Menu separator-->
-                    <div class="separator mb-3 opacity-75"></div>
-                    <!--end::Menu separator-->
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3">
-                        <a href="#" class="menu-link px-3">New Ticket</a>
-                    </div>
-                    <!--end::Menu item-->
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3">
-                        <a href="#" class="menu-link px-3">New Customer</a>
-                    </div>
-                    <!--end::Menu item-->
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3" data-kt-menu-trigger="hover" data-kt-menu-placement="right-start">
-                        <!--begin::Menu item-->
-                        <a href="#" class="menu-link px-3">
-                            <span class="menu-title">New Group</span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <!--end::Menu item-->
-                        <!--begin::Menu sub-->
-                        <div class="menu-sub menu-sub-dropdown w-175px py-4">
-                            <!--begin::Menu item-->
-                            <div class="menu-item px-3">
-                                <a href="#" class="menu-link px-3">Admin Group</a>
-                            </div>
-                            <!--end::Menu item-->
-                            <!--begin::Menu item-->
-                            <div class="menu-item px-3">
-                                <a href="#" class="menu-link px-3">Staff Group</a>
-                            </div>
-                            <!--end::Menu item-->
-                            <!--begin::Menu item-->
-                            <div class="menu-item px-3">
-                                <a href="#" class="menu-link px-3">Member Group</a>
-                            </div>
-                            <!--end::Menu item-->
-                        </div>
-                        <!--end::Menu sub-->
-                    </div>
-                    <!--end::Menu item-->
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3">
-                        <a href="#" class="menu-link px-3">New Contact</a>
-                    </div>
-                    <!--end::Menu item-->
-                    <!--begin::Menu separator-->
-                    <div class="separator mt-3 opacity-75"></div>
-                    <!--end::Menu separator-->
-                    <!--begin::Menu item-->
-                    <div class="menu-item px-3">
-                        <div class="menu-content px-3 py-3">
-                            <a class="btn btn-primary btn-sm px-4" href="#">Generate Reports</a>
-                        </div>
-                    </div>
-                    <!--end::Menu item-->
-                </div>
-                <!--end::Menu 2-->
-                <!--end::Menu-->
-            </div>
-        </div>
-        <!--end::Header-->
         <!--begin::Body-->
         <div class="card-body py-3">
             <!--begin::Table container-->
@@ -137,99 +53,59 @@
                         </th>
                         <th class="min-w-150px text-gray-900">Quote Number</th>
                         <th class="min-w-140px text-gray-900">Reference</th>
-                        <th class="min-w-120px text-gray-900">Customer Name</th>
+                        <th class="min-w-120px text-gray-900">Freelancer Name</th>
                         <th class="min-w-120px text-gray-900">Date</th>
                         <th class="min-w-120px text-gray-900">Quote Status</th>
                         <th class="min-w-120px text-gray-900">Total</th>
-                        <th class="min-w-100px text-end text-gray-900">Actions</th>
                     </tr>
                     </thead>
                     <!--end::Table head-->
                     <!--begin::Table body-->
                     <tbody>
-                    	<!-- Dummy Quote 1 -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="1">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">QTE-001</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">REF-001</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">John Doe</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">{{ \Carbon\Carbon::parse('2025-08-01')->format('d M Y') }}</span>
-						    </td>
-						    <td class="text-gray-600 fs-6">Accepted</td>
-						    <td class="text-gray-600 fs-6">$ {{ number_format(1200.00, 2) }}</td>
-						    <td class="text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
+                    	@if(count($quotes) > 0)
+                            @foreach($quotes as $quote)
+                                <tr class="clickable_table_row" data-href="{{ route('client.quote.view',$quote->id) }}">
+                                    <td>
+                                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                            <input class="form-check-input widget-13-check" type="checkbox" value="1">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 fs-6">{{ $quote->quote_number }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 d-block mb-1 fs-6">{{ $quote->reference }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 d-block mb-1 fs-6">{{ $quote->freelancer->name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-gray-600 d-block mb-1 fs-6">{{ \Carbon\Carbon::parse($quote->quote_date)->format('d M, Y') }}</span>
+                                    </td>
+                                    <td class="text-gray-600 fs-6">
+                                        @php
+                                            $status = $quote->status;
+                                            $badges = [
+                                                'Draft' => 'badge-light-secondary',
+                                                'Accepted' => 'badge-light-success',
+                                                'Declined' => 'badge-light-danger',
+                                                'Converted To Invoice' => 'badge-light-primary',
+                                            ];
+                                            $badgeClass = $badges[$status] ?? 'badge-light-info';
+                                        @endphp
 
-						<!-- Dummy Quote 2 -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="2">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">QTE-002</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">REF-002</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">Jane Smith</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">{{ \Carbon\Carbon::parse('2025-08-15')->format('d M Y') }}</span>
-						    </td>
-						    <td class="text-gray-600 fs-6">Pending</td>
-						    <td class="text-gray-600 fs-6">$ {{ number_format(850.75, 2) }}</td>
-						    <td class="text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
-
-						<!-- Dummy Quote 3 -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="3">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">QTE-003</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">REF-003</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">Alice Johnson</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 d-block mb-1 fs-6">{{ \Carbon\Carbon::parse('2025-08-25')->format('d M Y') }}</span>
-						    </td>
-						    <td class="text-gray-600 fs-6">Draft</td>
-						    <td class="text-gray-600 fs-6">$ {{ number_format(450.00, 2) }}</td>
-						    <td class="text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
+                                        <span class="badge fw-semibold {{ $badgeClass }}">
+                                            {{ ucfirst($status) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-gray-600 fs-6">{{ "$ ".$quote->grand_total }}</td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="8" class="text-center">No Quotes Found</td>
+                            </tr>
+                        @endif
                     </tbody>
                     <!--end::Table body-->
                 </table>

@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ItemController;
+use App\Http\Controllers\Admin\QuoteController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\VerificationRequestController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\TwoFactorController;
@@ -51,6 +53,14 @@ Route::middleware(['auth', 'role:Super Admin','2fa'])->group(function () {
             Route::get('/view/{id}', [UserController::class, 'view'])->name('view');
             Route::get('/edit/{id}', [UserController::class, 'edit'])->name('edit');
             Route::post('/update', [UserController::class, 'update'])->name('update');
+        });
+
+        Route::group(['prefix' => '/quote', 'as' => 'quote.'],function (){
+            Route::get('/view/{id?}',[QuoteController::class,'view'])->name('view');
+        });
+
+        Route::group(['prefix' => '/invoice', 'as' => 'invoice.'],function (){
+            Route::get('/view/{id?}',[InvoiceController::class,'view'])->name('view');
         });
 
         Route::group(['prefix' => 'item', 'as' => 'item.'], function () {

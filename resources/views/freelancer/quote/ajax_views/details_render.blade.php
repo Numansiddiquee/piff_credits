@@ -4,9 +4,12 @@
 
     <div class="card-header-lg p-4 ">
         <div class="top-header d-flex justify-content-between align-items-center">
-            <h2 class="h2 header p-4  m-0">{{ $current_quote->quote_id }}</h2>
+            <h2 class="h2 header p-4  m-0">{{ $current_quote->quote_number }}</h2>
             <div class="d-flex d-flex align-items-center gap-2 gap-lg-3">
-                <a href="{{ route('freelancer.quote.edit_quote',$current_quote->id)}}" class="btn btn-light btn-sm">Edit</a>
+
+                @if(isset($current_quote) && !in_array(strtolower($current_quote->status), ['accepted', 'converted to invoice']))
+                    <a href="{{ route('freelancer.quote.edit_quote',$current_quote->id)}}" class="btn btn-light btn-sm">Edit</a>
+                @endif
                 <button class="btn btn-sm btn-light p-3" id="attachment_drawer_toggle">
                     <i class="bi bi-paperclip p-0"></i>
                 </button>
@@ -31,6 +34,16 @@
             </div>
         </div>
     </div>
+    <div class="separator separator-solid my-3"></div>
+    @if(isset($current_quote) && strtolower($current_quote->status) === 'converted to invoice')
+        <div class="alert alert-secondary text-body d-flex align-items-center m-5" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+            <div>
+                <strong>Notice:</strong> This quote has been <strong>Converted To Invoice</strong> by {{ $current_quote->client->name ?? 'the client' }}.
+                No further actions or changes can be made.<br>
+            </div>
+        </div>
+    @endif
     <div class="separator separator-solid my-3"></div>
     <div class="card-body m-2 p-0">
         <ul class="nav nav-custom nav-tabs nav-line-tabs nav-line-tabs-2x border-0 fs-4 fw-semibold mb-0 p-4 bg-light">
@@ -68,7 +81,7 @@
                         Convert To Invoice
                     </a>
                 @else
-                    <a href="#" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2">
+                    <a href="#" class="text-gray-600 nav-link text-active-primary fs-6 mx-3 pb-2 cursor-not-allowed">
                         <i class="bi bi-receipt"></i>
                         Convert To Invoice
                     </a>

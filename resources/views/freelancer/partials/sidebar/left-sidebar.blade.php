@@ -22,7 +22,7 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.items') }}" class="menu-link">
+                    <a href="{{ route('freelancer.items') }}" class="menu-link  @if(Str::startsWith(Request::route()->getName(), 'freelancer.item')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.quotes') }}" class="menu-link">
+                    <a href="{{ route('freelancer.quotes') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.quote')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.invoices') }}" class="menu-link">
+                    <a href="{{ route('freelancer.invoices') }}" class="menu-link  @if(Str::startsWith(Request::route()->getName(), 'freelancer.invoice')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-cheque fs-2"></i>
                         </span>
@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.payments') }}" class="menu-link">
+                    <a href="{{ route('freelancer.payments') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.payment')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-book-square fs-2"></i>
                         </span>
@@ -58,7 +58,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.kyc') }}" class="menu-link">
+                    <a href="{{ route('freelancer.kyc') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.kyc')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-shield-tick fs-2"></i>
                         </span>
@@ -68,7 +68,7 @@
                 
                 <!-- Deposit / Withdraw -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.transactions') }}" class="menu-link">
+                    <a href="{{ route('freelancer.transactions') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.transaction')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-wallet fs-2"></i>
                         </span>
@@ -78,7 +78,7 @@
 
                 <!-- Deposit & Withdrawal History -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.transaction-history') }}" class="menu-link">
+                    <a href="{{ route('freelancer.transaction-history') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.transaction-history')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-time fs-2"></i>
                         </span>
@@ -88,7 +88,7 @@
 
                 <!-- Reports -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.reports') }}" class="menu-link">
+                    <a href="{{ route('freelancer.reports') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.report')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-graph-up fs-2"></i>
                         </span>
@@ -98,7 +98,7 @@
 
                 <!-- Accounting Summary -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.accounting') }}" class="menu-link">
+                    <a href="{{ route('freelancer.accounting') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.accounting')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-calculator fs-2"></i>
                         </span>
@@ -108,7 +108,7 @@
 
                 <!-- Client Database -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.clients') }}" class="menu-link">
+                    <a href="{{ route('freelancer.clients') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.client')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-user fs-2"></i>
                         </span>
@@ -118,7 +118,7 @@
 
                 <!-- Support Tickets -->
                 <div class="menu-item">
-                    <a href="{{ route('freelancer.support') }}" class="menu-link">
+                    <a href="{{ route('freelancer.support') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'freelancer.support')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-message-text fs-2"></i>
                         </span>

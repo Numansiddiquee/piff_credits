@@ -64,7 +64,7 @@
                                             <i class="ki-outline ki-people fs-3 text-primary me-2"></i>
                                             <div class="fs-2 fw-bold" 
                                                  data-kt-countup="true" 
-                                                 data-kt-countup-value="{{ $user->freelancers ? $user->freelancers->count() : 10 }}">0</div>
+                                                 data-kt-countup-value="{{ $user->active_freelancers_count ?? 0 }}">{{ $user->active_freelancers_count ?? 0 }}</div>
                                         </div>
                                         <div class="fw-semibold fs-6 text-gray-500">Freelancers</div>
                                     </div>
@@ -87,7 +87,7 @@
                                             <i class="ki-outline ki-people fs-3 text-primary me-2"></i>
                                             <div class="fs-2 fw-bold" 
                                                  data-kt-countup="true" 
-                                                 data-kt-countup-value="{{ $user->clients ? $user->clients->count() : 0 }}">0</div>
+                                                 data-kt-countup-value="{{ $user->active_clients_count ?? 0 }}">{{ $user->active_clients_count ?? 0 }}</div>
                                         </div>
                                         <div class="fw-semibold fs-6 text-gray-500">Clients</div>
                                     </div>
@@ -99,7 +99,7 @@
                                         <i class="ki-outline ki-cheque fs-3 text-info me-2"></i>
                                         <div class="fs-2 fw-bold" 
                                              data-kt-countup="true" 
-                                             data-kt-countup-value="{{ $user->invoices ? $user->invoices->count() : 0 }}">0</div>
+                                             data-kt-countup-value="{{ $user->total_invoices ?? 0 }}">{{ $user->total_invoices ?? 0 }}</div>
                                     </div>
                                     <div class="fw-semibold fs-6 text-gray-500">Invoices</div>
                                 </div>
@@ -110,7 +110,7 @@
                                         <i class="ki-outline ki-underlining fs-3 text-warning me-2"></i>
                                         <div class="fs-2 fw-bold" 
                                              data-kt-countup="true" 
-                                             data-kt-countup-value="{{ $user->quotes ? $user->quotes->count() : 0 }}">0</div>
+                                             data-kt-countup-value="{{ $user->total_quotes ?? 0 }}">{{ $user->total_quotes ?? 0 }}</div>
                                     </div>
                                     <div class="fw-semibold fs-6 text-gray-500">Quotes</div>
                                 </div>

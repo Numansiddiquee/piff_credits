@@ -21,7 +21,7 @@
                 <!--begin::Actions-->
                 <div class="d-flex align-items-center gap-2 gap-lg-3">
                     <a href="#" class="btn btn-flex btn-outline btn-color-gray-700 btn-active-color-primary bg-body h-40px fs-7 fw-bold d-none" data-bs-toggle="modal" data-bs-target="#kt_modal_view_users">Add Member</a>
-                    <a href="#" class="btn btn-flex btn-primary h-40px fs-7 fw-bold" >Create Invoice</a>
+                    <a href="#" class="btn btn-flex btn-primary h-40px fs-7 fw-bold d-none" >Create Invoice</a>
                 </div>
                 <!--end::Actions-->
             </div>
@@ -51,175 +51,80 @@
                             </div>
                         </th>
                         <th class="min-w-150px">Invoice #</th>
-                        <th class="min-w-150px">Order #</th>
-                        <th class="min-w-150px">Customer Name</th>
-                        <th class="min-w-120px">Status</th>
+                        <th class="min-w-150px">Freelancer Name</th>
                         <th class="min-w-150px">Invoice Date</th>
                         <th class="min-w-150px">Due Date</th>
+                        <th class="min-w-120px">Status</th>
                         <th class="min-w-100px text-end">Amount</th>
                         <th class="min-w-100px text-end">Balance Due</th>
-                        <th class="min-w-100px text-end">Action</th>
                     </tr>
                     </thead>
                     <!--end::Table head-->
                     <!--begin::Table body-->
                     <tbody>
-	                    <!-- Dummy Invoice 1: Paid -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="1">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">INV-001</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">ORD-001</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">John Doe</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">Paid</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse('2025-08-01')->format('d M Y') }}</span>
-						    </td>
-						    <td>
-						        @php
-						            $status = 'Paid';
-						        @endphp
-						        <span class="badge badge-success">
-						            {{ $status }}
-						        </span>
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(500.00, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(0.00, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
+	                    @forelse ($invoices as $invoice)
+	                        <tr class="clickable_table_row" data-href="{{ route('client.invoice.view',$invoice->id) }}">
+	                            <td>
+	                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+	                                    <input class="form-check-input widget-13-check" type="checkbox" value="{{ $invoice->id }}">
+	                                </div>
+	                            </td>
+	                            <td>
+	                                <span class="text-gray-600 fs-6">{{ $invoice->invoice_number }}</span>
+	                            </td>
+	                            <td>
+	                                <span class="text-gray-600 fs-6">{{ $invoice->freelancer->name ?? '-'}}</span>
+	                            </td>
+	                            <td>
+	                                <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M, Y') }}</span>
+	                            </td>
+	                            <td>
+	                                <span class="text-gray-600 fs-6">{{ $invoice->due_date->format('d M, Y') }}</span>
+	                            </td>
+	                            
+	                            <td> 
+	                                @php
+									   
+									    $due = \Carbon\Carbon::parse($invoice->due_date);
+									    $today = \Carbon\Carbon::today();
+									    $status = ucfirst(strtolower($invoice->status));
+									    $overdueDays = 0;
 
-						<!-- Dummy Invoice 2: Overdue -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="2">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">INV-002</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">ORD-002</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">Jane Smith</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">Unpaid</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse('2025-07-15')->format('d M Y') }}</span>
-						    </td>
-						    <td>
-						        @php
-						            $dueDate = \Carbon\Carbon::parse('2025-07-20');
-						            $today = \Carbon\Carbon::today();
-						            $status = '';
-						            $overdueDays = 0;
-						            $paid = 'no';
-						            if ($dueDate->isPast() && $paid == 'no') {
-						                $status = 'Overdue';
-						                $overdueDays = $dueDate->diffInDays($today);
-						            } elseif ($dueDate->diffInDays($today) <= 6 && $paid == 'no') {
-						                $status = 'Due Soon';
-						            } elseif ($paid == 'no') {
-						                $status = 'Unpaid';
-						            } else {
-						                $status = 'Paid';
-						            }
-						        @endphp
-						        <span class="badge badge-danger">
-						            {{ $status == "Overdue" ? $status . ' by ' . $overdueDays . ' Days' : $status }}
-						        </span>
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(750.50, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(750.50, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
+									    if (!in_array($status, ['Paid', 'Written off'])) {
+									        if ($due->isPast()) {
+									            $status = 'Overdue';
+									            $overdueDays = $due->diffInDays($today);
+									        } elseif ($due->diffInDays($today) <= 6) {
+									            $status = 'Due Soon';
+									        } else {
+									            $status = 'Unpaid';
+									        }
+									    }
+									@endphp
 
-						<!-- Dummy Invoice 3: Due Soon -->
-						<tr class="clickable_table_row" data-href="#">
-						    <td>
-						        <div class="form-check form-check-sm form-check-custom form-check-solid">
-						            <input class="form-check-input widget-13-check" type="checkbox" value="3">
-						        </div>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">INV-003</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">N/A</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">Alice Johnson</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">Unpaid</span>
-						    </td>
-						    <td>
-						        <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse('2025-08-25')->format('d M Y') }}</span>
-						    </td>
-						    <td>
-						        @php
-						            $dueDate = \Carbon\Carbon::parse('2025-09-01');
-						            $today = \Carbon\Carbon::today();
-						            $status = '';
-						            $overdueDays = 0;
-						            $paid = 'no';
-						            if ($dueDate->isPast() && $paid == 'no') {
-						                $status = 'Overdue';
-						                $overdueDays = $dueDate->diffInDays($today);
-						            } elseif ($dueDate->diffInDays($today) <= 6 && $paid == 'no') {
-						                $status = 'Due Soon';
-						            } elseif ($paid == 'no') {
-						                $status = 'Unpaid';
-						            } else {
-						                $status = 'Paid';
-						            }
-						        @endphp
-						        <span class="badge badge-warning">
-						            {{ $status == "Overdue" ? $status . ' by ' . $overdueDays . ' Days' : $status }}
-						        </span>
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(300.00, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        ${{ number_format(300.00, 2) }}
-						    </td>
-						    <td class="text-gray-600 fs-6 text-end">
-						        <a href="#" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-						            <i class="ki-outline ki-pencil fs-2"></i>
-						        </a>
-						    </td>
-						</tr>
+									<span class="badge 
+									    {{ $status === 'Overdue' ? 'badge-danger' : 
+									       ($status === 'Due Soon' || $status === 'Unpaid' ? 'badge-warning' : 
+									       ($status === 'Written off' ? 'badge-secondary' : 'badge-success')) }}">
+									    {{ $status === 'Overdue' ? "$status by $overdueDays days" : $status }}
+									</span>
+	                            </td>
+	                            <td class="text-gray-600 fs-6 text-end">
+	                                ${{ number_format($invoice->total, 2) }}
+	                            </td>
+	                            <td class="text-gray-600 fs-6 text-end">
+	                                ${{ number_format($invoice->due, 2) }}
+	                            </td>
+	                        </tr>
+	                    @empty
+	                        <tr>
+	                            <td colspan="9" class="text-center">
+	                                No Records Found!
+	                            </td>
+	                        </tr>
+	                    @endforelse
+
+						
                     </tbody>
                     <!--end::Table body-->
                 </table>

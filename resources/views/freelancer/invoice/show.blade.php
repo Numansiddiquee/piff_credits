@@ -44,27 +44,22 @@
                         <div class="separator separator-solid my-3"></div>
                         @foreach($invoices as $inv)
                             @php
-                                if($inv->status == 'Paid'){
-                                    $status = 'Paid';
-                                }else{
-                                    $dueDate = \Carbon\Carbon::parse($inv->due_date);
-                                    $today = \Carbon\Carbon::today();
-                                    $status = '';
-                                    $overdueDays = 0;
-                                    $paid  =  'no';
-                                    if ($dueDate->isPast() && $paid == 'no') {
+                                $due = \Carbon\Carbon::parse($inv->due_date);
+                                $today = \Carbon\Carbon::today();
+                                $status = ucfirst(strtolower($inv->status));
+                                $overdueDays = 0;
+
+                                if (!in_array($status, ['Paid', 'Written off'])) {
+                                    if ($due->isPast()) {
                                         $status = 'Overdue';
-                                        $overdueDays = $dueDate->diffInDays($today);
-                                    } elseif ($dueDate->diffInDays($today) <= 6 && $paid == 'no') {
+                                        $overdueDays = $due->diffInDays($today);
+                                    } elseif ($due->diffInDays($today) <= 6) {
                                         $status = 'Due Soon';
-                                    } elseif($paid == 'no'){
+                                    } else {
                                         $status = 'Unpaid';
-                                    }else{
-                                        $status = 'Paid';
                                     }
                                 }
-                                
-//                          @endphp
+                            @endphp
                             <div
                                 class="d-flex justify-content-between rounded py-3 px-3 mb-3 invoice-div {{ $inv->id == $id ? 'activeDiv' : '' }}"
                                 id="invoice-{{ $inv->id }}" onclick="loadIncoice('{{ $inv->id }}')"
@@ -73,9 +68,12 @@
                                     <b class="fw-bold">{{$inv->client->name}}</b>
                                     <span
                                         class="text-muted fs-8 mt-1 mb-2">{{$inv->invoice_number}} &middot; {{$inv->created_at->format('d M,Y')}}</span>
-                                    <span class="badge @if($status == 'Overdue') badge-danger @elseif($status == 'Due Soon' || $status == 'Unpaid' ) badge-warning  @else badge-success @endif w-130px">
-                                            {{ $status ==  "Overdue" ? $status.' by '.$overdueDays.'Days' : $status}}
-                                        </span>
+                                    <span class="badge 
+                                        {{ $status === 'Overdue' ? 'badge-danger' : 
+                                           ($status === 'Due Soon' || $status === 'Unpaid' ? 'badge-warning' : 
+                                           ($status === 'Written off' ? 'badge-secondary' : 'badge-success')) }}">
+                                        {{ $status === 'Overdue' ? "$status by $overdueDays days" : $status }}
+                                    </span>
                                 </div>
                                 <div class="fw-bold">${{number_format($inv->total,2)}}</div>
                             </div>
@@ -279,16 +277,15 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        toastr.success('success','Invoice updated successfully!');
+                        toastr.success(response.message); // Using dynamic message from backend
                         $('#expectedPaymentDate').modal('hide');
-                        location.reload();
+                        location.reload();  // Reload page to see changes
                     } else {
-                        toastr.error('error','Failed to update the invoice.');
+                        toastr.error(response.message || 'Failed to update the invoice.');
                     }
                 },
                 error: function (xhr) {
-                    toastr.error('error','An error occurred. Please try again.');
-                    console.error(xhr.responseText);
+                    toastr.error( xhr.responseJSON?.error || 'An error occurred. Please try again.');
                 }
             });
         });
@@ -308,10 +305,13 @@
             const writeOffDate = $('#writeoff_date').val();
             const writeOffReason = $('#writeoff_reason').val();
 
-            if (!writeOffDate || !writeOffReason) {
-                toastr.error('Please provide both date and reason.');
+            if (!writeOffDate || !writeOffReason.trim()) {
+                toastr.error('Please provide both the write-off date and reason.');
                 return;
             }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).text('Processing...');
 
             $.ajax({
                 url: "{{ route('freelancer.invoice.writeOff') }}",
@@ -324,10 +324,25 @@
                 },
                 success: function (response) {
                     toastr.success(response.message);
+
                     $('#writeOff').modal('hide');
+
+                    // Example: Change invoice status in UI
+                    $('#invoice-status')
+                        .text('Written Off')
+                        .removeClass('badge-success badge-warning')
+                        .addClass('badge-danger');
+
+                    // Or refresh the page after 1s
+                    setTimeout(() => location.reload(), 1000);
                 },
                 error: function (xhr) {
-                    toastr.error('Failed to save write-off. Please try again.');
+                    const message = xhr.responseJSON?.error || 'Failed to save write-off. Please try again.';
+                    toastr.error(message);
+                },
+                complete: function () {
+                    // ✅ Re-enable button
+                    $btn.prop('disabled', false).text('Confirm Write-Off');
                 }
             });
         });

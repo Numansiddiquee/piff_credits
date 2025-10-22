@@ -6,7 +6,10 @@
     <div class="top-header d-flex justify-content-between align-items-center">
         <h2 class="h2 header p-4 m-0">{{$invoice->invoice_number}}</h2>
         <div class="d-flex align-items-center gap-2 gap-lg-3">
-            <a href="{{ route('freelancer.invoice.edit',$invoice->id)}}" class="btn btn-light btn-sm">Edit</a>
+
+            @if(isset($invoice) && in_array(strtolower($invoice->status), ['draft', 'sent']))
+                <a href="{{ route('freelancer.invoice.edit', $invoice->id) }}" class="btn btn-light btn-sm">Edit</a>
+            @endif
             <button class="btn btn-sm btn-light p-3" id="attachment_drawer_toggle">
                 <i class="bi bi-paperclip p-0"></i>
             </button>
@@ -32,6 +35,16 @@
     </div>
 </div>
 <div class="separator separator-solid my-3"></div>
+@if(isset($invoice) && strtolower($invoice->status) === 'written off')
+    <div class="alert alert-secondary text-body d-flex align-items-center m-5" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+        <div>
+            <strong>Notice:</strong> This invoice has been <strong>written off</strong> by {{ $invoice->freelancer->name ?? 'the freelancer' }}.
+            No further payments or changes can be made.<br>
+            <strong>Reason:</strong> {{ $invoice->writeOff->reason ?? 'N/A' }}
+        </div>
+    </div>
+@endif
 <div class="card-body m-2 p-0">
     <ul class="nav nav-custom nav-tabs nav-line-tabs nav-line-tabs-2x border-0 fs-4 fw-semibold mb-0 p-4 bg-light">
         <li class="nav-item">

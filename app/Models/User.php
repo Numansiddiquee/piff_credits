@@ -61,6 +61,41 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function freelancerQuotes()
+    {
+        return $this->hasMany(Quote::class, 'user_id');
+    }
+
+    public function clientQuotes()
+    {
+        return $this->hasMany(Quote::class, 'client_id');
+    }
+
+
+    public function freelancerInvoices()
+    {
+        return $this->hasMany(Invoice::class, 'user_id');
+    }
+
+    public function clientInvoices()
+    {
+        return $this->hasMany(Invoice::class, 'client_id');
+    }
+
+    public function getTotalInvoicesAttribute()
+    {
+        return $this->role === 'freelancer'
+            ? $this->freelancerInvoices()->count()
+            : $this->clientInvoices()->count();
+    }
+
+    public function getTotalQuotesAttribute()
+    {
+        return $this->role === 'freelancer'
+            ? $this->freelancerQuotes()->count()
+            : $this->clientQuotes()->count();
+    }
+
     public function freelancerClients()
     {
         return $this->hasMany(FreelancerClient::class, 'freelancer_id');
@@ -69,6 +104,25 @@ class User extends Authenticatable
     public function clientFreelancers()
     {
         return $this->hasMany(FreelancerClient::class, 'client_id');
+    }
+
+    public function getActiveClientsCountAttribute()
+    {
+        return $this->freelancerClients() // freelancer_id = this user
+            ->where('status', 'active')
+            ->distinct('client_id')
+            ->count('client_id');
+    }
+
+    /**
+     * Count of ACTIVE freelancers for a client
+     */
+    public function getActiveFreelancersCountAttribute()
+    {
+        return $this->clientFreelancers() // client_id = this user
+            ->where('status', 'active')
+            ->distinct('freelancer_id')
+            ->count('freelancer_id');
     }
 
 }

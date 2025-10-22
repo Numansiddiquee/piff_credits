@@ -93,12 +93,14 @@
                                                             @php
                                                                 $hash = \Crypt::encryptString($current_quote->id);
                                                             @endphp
-                                                            <a href="{{ route('quotes.accept',$hash) }}" style="text-decoration: none; background-color: #4dcf59; border: 1px solid #49bd54; color: #fff; padding: 10px 20px; display: inline-block; border-radius: 4px; margin-right: 10px;">
-                                                                ACCEPT QUOTE
-                                                            </a>
-                                                            <a href="{{ route('quotes.reject',$hash) }}" style="text-decoration: none; background-color: #f44336; border: 1px solid #e53935; color: #fff; padding: 10px 20px; display: inline-block; border-radius: 4px;">
-                                                                REJECT QUOTE
-                                                            </a>
+                                                            @if($current_quote->status !== 'Declined')
+                                                                <a href="{{ route('quotes.accept',$hash) }}" style="text-decoration: none; background-color: #4dcf59; border: 1px solid #49bd54; color: #fff; padding: 10px 20px; display: inline-block; border-radius: 4px; margin-right: 10px;">
+                                                                    ACCEPT QUOTE
+                                                                </a>
+                                                                <a href="{{ route('quotes.reject',$hash) }}" style="text-decoration: none; background-color: #f44336; border: 1px solid #e53935; color: #fff; padding: 10px 20px; display: inline-block; border-radius: 4px;">
+                                                                    REJECT QUOTE
+                                                                </a>
+                                                            @endif
                                                         </p>
                                                         <p>If you have any questions or need further assistance, feel free to contact us.</p>
                                                     </td>
@@ -132,7 +134,7 @@
                 <div class="d-flex flex-stack flex-wrap gap-2 py-5 ps-8 pe-5 border-top">
                     <div class="d-flex align-items-center me-3">
                         <div class="btn-group me-4">
-                            <button type="submit" class="btn btn-primary fs-bold px-6" data-kt-inbox-form="send">Send</button>
+                            <button type="{{ $current_quote->status == 'Declined' ? 'button' : 'submit' }}" class="btn btn-primary fs-bold px-6 {{ $current_quote->status == 'Declined' ? 'cursor-not-allowed' : '' }}" data-kt-inbox-form="send">Send</button>
                         </div>
                         <span class="btn btn-icon btn-sm btn-clean btn-active-light-primary me-2" id="kt_inbox_reply_attachments_select" data-kt-inbox-form="dropzone_upload">
                             <i class="ki-outline ki-paper-clip fs-2 m-0"></i>

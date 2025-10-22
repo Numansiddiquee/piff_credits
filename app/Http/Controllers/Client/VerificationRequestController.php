@@ -32,7 +32,7 @@ class VerificationRequestController extends Controller
         $status = $this->sumsub->getApplicantStatus($applicantId);
 
         if (!empty($status['reviewStatus']) && in_array($status['reviewStatus'], ['completed', 'pending', 'queued'])) {
-            return redirect()->route('client.kyc')->with('success', 'Your KYB is already submitted');
+            return redirect()->route('client.kyb')->with('success', 'Your KYB is already submitted');
         }
         
         // 2. Generate SDK Access Token

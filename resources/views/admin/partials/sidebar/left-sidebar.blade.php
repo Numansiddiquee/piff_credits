@@ -16,13 +16,13 @@
                 <div class="menu-item">
                     <a href="{{ route('admin.dashboard') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.dashboard')) active @endif">
 						<span class="menu-icon">
-							<i class="ki-outline ki-home-2 fs-2"></i>
+							<i class="ki-outline ki-home-2 fs-2"></i> 
 						</span>
                         <span class="menu-title">Dashboard</span>
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a href="{{ route('admin.items') }}" class="menu-link">
+                    <a href="{{ route('admin.items') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.item')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('admin.quotes') }}" class="menu-link">
+                    <a href="{{ route('admin.quotes') }}" class="menu-lin @if(Str::startsWith(Request::route()->getName(), 'admin.quote')) active @endifk">
                         <span class="menu-icon">
                             <i class="ki-outline ki-underlining fs-2"></i>
                         </span>
@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('admin.invoices') }}" class="menu-link">
+                    <a href="{{ route('admin.invoices') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.invoice')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-cheque fs-2"></i>
                         </span>
@@ -49,7 +49,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('admin.payments') }}" class="menu-link">
+                    <a href="{{ route('admin.payments') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.payment')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-book-square fs-2"></i>
                         </span>
@@ -59,7 +59,7 @@
                 
                 <!-- Deposit & Withdrawal History -->
                 <div class="menu-item">
-                    <a href="{{ route('admin.transaction-history') }}" class="menu-link">
+                    <a href="{{ route('admin.transaction-history') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.transaction-history')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-time fs-2"></i>
                         </span>
@@ -69,7 +69,7 @@
 
                 <!-- Deposit & Withdrawal History -->
                 <div class="menu-item">
-                    <a href="{{ route('admin.users') }}" class="menu-link">
+                    <a href="{{ route('admin.users') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.user')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-user fs-2"></i>
                         </span>
@@ -78,7 +78,7 @@
                 </div>
 
                 <div class="menu-item">
-                    <a href="{{ route('admin.verification') }}" class="menu-link">
+                    <a href="{{ route('admin.verification') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.verification')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-user fs-2"></i>
                         </span>
@@ -88,7 +88,7 @@
 
                 <!-- Support Tickets -->
                 <div class="menu-item">
-                    <a href="{{ route('admin.support') }}" class="menu-link">
+                    <a href="{{ route('admin.support') }}" class="menu-link @if(Str::startsWith(Request::route()->getName(), 'admin.support')) active @endif">
                         <span class="menu-icon">
                             <i class="ki-outline ki-message-text fs-2"></i>
                         </span>

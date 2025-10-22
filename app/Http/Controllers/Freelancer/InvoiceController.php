@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Company;    
 use App\Services\LogService;
 use App\Services\EmailService;
+use App\Services\NotificationService;
 use App\Services\TransactionService;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -27,10 +28,12 @@ use Illuminate\Support\Facades\Hash;
 class InvoiceController extends Controller
 {
     protected $emailService;
+    protected $notificationService;
 
-    public function __construct(EmailService $emailService)
+    public function __construct(EmailService $emailService, NotificationService $notificationService)
     {
         $this->emailService = $emailService;
+        $this->notificationService = $notificationService;
     }
 
     public function create()
@@ -46,7 +49,112 @@ class InvoiceController extends Controller
     }
 
     // Store a new invoice
+
     public function store(Request $request)
+    {
+        // return $request;
+        $invoice_date = date('Y-m-d', strtotime(str_replace(',', '', $request->invoice_date)));
+        $invoice_due_date = date('Y-m-d', strtotime(str_replace(',', '', $request->invoice_due_date)));
+        $uuid = Uuid::uuid7();
+        $invoice = Invoice::create([
+            'client_id' => $request->client_id,
+            'unique_id' => $uuid->toString(),
+            'user_id' => Auth::user()->id,
+            'invoice_number' => $request->invoice_number,
+            'subject' => $request->invoice_subject,
+            'invoice_date' => $invoice_date,
+            'due_date' => $invoice_due_date,
+            'discount' => $request->discount ?? 0.00,
+            'discount_type' => $request->discount_type,
+            'discounted_amount' => $request->discounted_amount ?? 0.00,
+            'terms_condition' => $request->terms_condition,
+            'notes' => $request->notes,
+            'status' => 'Draft',
+            'subtotal' => 0,
+            'total' => 0,
+            'due' => 0,
+        ]);
+
+        $subtotal = 0;
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('invoices/attachments', $filename, 'public');
+
+                $invoice->attachments()->create([
+                    'file_name' => $filename,
+                    'file_path' => $path,
+                    'file_type' => $file->getClientOriginalExtension(),
+                    'uploaded_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        foreach ($request->name as $index => $name) {
+            $quantity = $request->quantity[$index];
+            $price = $request->price[$index];
+            $description = $request->description[$index] ?? '';
+            $total = $quantity * $price;
+            $subtotal += $total;
+
+            $itemId = $request->id[$index] ?? null;
+            $isNew = ($request->is_new[$index] ?? 0) == 1;
+
+            // If new item (no existing ID or flagged as new), create in items table
+            if ($isNew || empty($itemId)) {
+                $newItem = Item::create([
+                    'user_id' => Auth::user()->id,
+                    'type' => 'services',
+                    'name' => $name,
+                    'description' => $description,
+                    'selling_price' => $price,
+                ]);
+                $itemId = $newItem->id;
+            }
+
+            $invoice->items()->create([
+                'user_id' => Auth::user()->id,
+                'item_id' => $itemId,
+                'item_name' => $name,
+                'description' => $description,
+                'quantity' => $quantity,
+                'price' => $price,
+                'total' => $total,
+            ]);
+        }
+
+        $discountAmount = ($request->discount_type === '%')
+            ? ($subtotal * $request->discount / 100)
+            : $request->discount;
+
+        $shippingCharges = $request->shipping_charges ?? 0;
+        $total = $subtotal - $discountAmount + $shippingCharges;
+
+        $invoice->update([
+            'subtotal' => $subtotal,
+            'total' => $total,
+            'due' => $total,
+        ]);
+
+        $log_title = "Invoice Created";
+        $log_text = "New Invoice: $request->invoice_number Created for $" . $total;
+        $log = new LogService();
+        $performerType = User::class;
+        $log->addLog($request->client_id, 'invoice', $invoice->id, 'log', $log_title, $log_text, $performerType);
+
+        $this->notificationService->createNotification(
+            $request->client_id,
+            auth()->user()->id,
+            'invoice_created',
+            'New Invoice Received',
+            'A new Invoice (#' . $invoice->invoice_number . ') has been created for you by ' . auth()->user()->name,
+            route('client.invoice.view', $invoice->id)
+        );
+        return redirect()->route('freelancer.invoices');
+    }
+
+    public function store_old(Request $request)
     {
         // return $request;
         $invoice_date = date('Y-m-d', strtotime(str_replace(',', '', $request->invoice_date)));
@@ -237,12 +345,23 @@ class InvoiceController extends Controller
         $invoice->update([
             'subtotal' => $subtotal,
             'total' => $total,
+            'due' => $total,
         ]);
 
         $log_title="Invoice Updated";
         $log_text="Invoice: $invoice->invoice_number Updated";
         $log = new LogService();
         $log->addLog($request->client_id,'invoice',$request->invoice_id,'log',$log_title,$log_text,User::class);
+
+        $this->notificationService->createNotification(
+            $request->client_id,
+            auth()->user()->id,
+            'invoice_updated',
+            'Invoice Updated',
+            'A Invoice (#' . $invoice->invoice_number . ') has been Updated for you by ' . auth()->user()->name,
+            route('client.invoice.view', $invoice->id)
+        );
+
         return redirect()->route('freelancer.invoices')->with('success', 'Invoice updated successfully.');
     }
 
@@ -455,11 +574,29 @@ class InvoiceController extends Controller
 
     public function updateDueDetails(Request $request)
     {
+
         $invoice = Invoice::findOrFail($request->invoice_id);
+        
+        if (strtolower($invoice->status)  === 'Paid' || strtolower($invoice->status)  === 'written off') {
+            return response()->json(['error' => 'You cannot do this action. Please contact support.'], 400);
+        }
 
         $invoice->due_date = $request->due_date;
         $invoice->payment_delay_note = $request->payment_delay_note;
         $invoice->save();
+
+        $logService = new LogService();
+        $message = 'Freelancer ' . auth()->user()->name . ' updated the due date with this note ('.$invoice->payment_delay_note.') for Invoice #' . $invoice->invoice_number;
+        $logService->addLog($invoice->client_id,'invoice',$invoice->id,'log', 'Invoice Due Updated', $message,User::class);
+
+        $this->notificationService->createNotification(
+            $invoice->client_id,
+            auth()->id(),
+            'invoice_due_updated',
+            'Invoice Updated',
+            'The due date with this note  ('.$invoice->payment_delay_note.')  for Invoice #' . $invoice->invoice_number . ' has been updated by ' . auth()->user()->name,
+            route('client.invoice.view', $invoice->id)
+        );
 
         return response()->json([
             'success' => true,
@@ -478,23 +615,62 @@ class InvoiceController extends Controller
 
     public function writeOff(Request $request)
     {
+        $invoice = Invoice::findOrFail($request->invoice_id);
+        $client_id = $invoice->client_id;
 
-        WriteOff::create([
-            'user_id' => Auth::user()->id,
-            'invoice_id' => $request->invoice_id,
+        if ($invoice->status === 'Paid') {
+            return response()->json(['error' => 'This invoice is already paid and cannot be written off.'], 400);
+        }
+
+        if ($invoice->writeOff()->exists()) {
+            return response()->json(['error' => 'This invoice has already been written off.'], 400);
+        }
+
+        $writeOff = WriteOff::create([
+            'user_id'       => Auth::id(),
+            'invoice_id'    => $invoice->id,
             'writeoff_date' => $request->writeoff_date,
-            'reason' => $request->reason,
+            'reason'        => $request->reason,
         ]);
 
-        return response()->json(['message' => 'Write-Off saved successfully.']);
+        $logService = new LogService();
+        $message = 'Freelancer ' . auth()->user()->name . ' performed a write-off on Invoice #' . 
+                    $invoice->invoice_number . ' with reason: "' . $request->reason . '"';
+        $logService->addLog($client_id, 'invoice', $invoice->id, 'log', 'Invoice Write-Off', $message, User::class);
+
+        $this->notificationService->createNotification(
+            $client_id,
+            auth()->id(),
+            'invoice_writeoff',
+            'Invoice Written Off',
+            'Invoice #' . $invoice->invoice_number . ' has been written off by ' . auth()->user()->name . '.',
+            route('client.invoice.view', $invoice->id)
+        );
+
+        $invoice->update(['status' => 'Written Off']);
+
+        return response()->json(['message' => 'Invoice written off successfully.']);
     }
+
+
     public function add_comment(Request $request){
         $client_id = $request->client_id;
         $invoice_id = $request->invoice_id;
         $comment = $request->comment;
         $newComment = new LogService();
-        $newComment->addLog($client_id,'invoice',$invoice_id,'comment','',$comment,User::class);
-        $invoice_comments_logs = LogsComment::where('action_id',$invoice_id)->where('action_type','invoice')->where('type','comment')->orderBy('created_at','DESC')->get();
+        $newComment->addLog($client_id,'invoice',$invoice_id,'comment','Freelancer Comment',$comment,User::class);
+        $invoice = Invoice::find($invoice_id);
+        // Create in-app notification for the client
+        $this->notificationService->createNotification(
+            $client_id, 
+            auth()->id(),
+            'freelancer_comment',
+            'New Comment from ' . auth()->user()->name,
+            'Freelancer ' . auth()->user()->name . ' commented on Invoice #' . $invoice->invoice_number . ': "' . $request->message . '"',
+            route('client.invoice.view', $invoice->id)
+        );
+
+        $invoice_comments_logs = LogsComment::where('action_id',$invoice_id)->where('action_type','invoice')->orderBy('created_at','DESC')->get();
         $comments_blade = view('freelancer.invoice.ajax_views.comments', compact('invoice_comments_logs'))->render();
         return response()->json(['all_comments'=>$comments_blade]);
     }
@@ -514,6 +690,19 @@ class InvoiceController extends Controller
                 'uploaded_by' => auth()->id(),
             ]);
         }
+
+        $this->notificationService->createNotification(
+            $invoice->client_id,
+            auth()->id(),  
+            'attachment_uploaded',
+            'New Attachment Uploaded',
+            'Freelancer ' . auth()->user()->name . ' uploaded new attachment(s) for Invoice #' . $invoice->invoice_number . '.',
+            route('client.invoice.view', $invoice->id)
+        );
+
+        $newComment = new LogService();
+        $message  = 'Freelancer ' . auth()->user()->name . ' uploaded new attachment(s) for Invoice #' . $invoice->invoice_number;
+        $newComment->addLog($invoice->client_id, 'invoice', $invoice->id, 'log', 'New Attachment Uploaded', $message,User::class);
 
         return response()->json(['success' => true]);
     }

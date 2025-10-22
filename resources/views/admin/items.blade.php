@@ -20,7 +20,7 @@
                 </div>
                 <!--end::Page title-->
                 <!--begin::Actions-->
-                <div class="d-flex align-items-center gap-2 gap-lg-3">
+                <div class="d-flex align-items-center gap-2 gap-lg-3 d-none">
                     <a href="#"
                        class="btn btn-flex btn-outline btn-color-gray-700 btn-active-color-primary bg-body h-40px fs-7 fw-bold d-none"
                        data-bs-toggle="modal" data-bs-target="#kt_modal_view_users">Add Member</a>
@@ -56,8 +56,9 @@
                             </div>
                         </th>
                         <th class="min-w-150px text-gray-900">Name</th>
+                        <th class="min-w-150px text-gray-900">Created By</th>
                         <th class="min-w-150px text-gray-900">Description</th>
-                        <th class="min-w-150px text-gray-900">Rate</th>
+                        <th class="min-w-150px text-gray-900">Rate (USD)</th>
                         <th class="min-w-150px text-gray-900">Usage Unit</th>
                         <th class="min-w-100px text-end text-gray-900">Action</th>
                     </tr>
@@ -74,14 +75,17 @@
 	                                <td>
 	                                    <span class="text-gray-600 fs-6">{{ $item->name }}</span>
 	                                </td>
+                                    <td>
+                                        <span class="text-gray-600 fs-6">{{ $item->createdBy->name ?? '-' }}</span>
+                                    </td>
 	                                <td>
 	                                    <span class="text-gray-600 fs-6">{{ $item->description }}</span>
 	                                </td>
 	                                <td>
-	                                    <span class="text-gray-600 fs-6">{{ $item->selling_price }}</span>
+	                                    <span class="text-gray-600 fs-6">${{ $item->selling_price }}</span>
 	                                </td>
 	                                <td>
-	                                    <span class="text-gray-600 fs-6">{{ $item->unit }}</span>
+	                                    <span class="text-gray-600 fs-6">{{ $item->unit ?? '-'}}</span>
 	                                </td>
 
 	                                <td class="text-end">

@@ -1,9 +1,9 @@
-@extends('layouts.custom.admin')
-@section('admin-css')
+@extends('layouts.custom.freelancer')
+@section('freelancer-css')
 
 @endsection
 
-@section('admin-content')
+@section('freelancer-content')
     <!--begin::Toolbar-->
     <div id="kt_app_toolbar" class="app-toolbar pt-6 pb-2">
         <!--begin::Toolbar container-->
@@ -222,7 +222,7 @@
     <!--end::Content-->
 @endsection
 
-@section('admin-js')
+@section('freelancer-js')
 
     <script src="{{ asset('assets/js/custom/apps/ecommerce/catalog/save-category.js') }}"></script>
     <script type="text/javascript">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FreelancerClient;
 use App\Mail\QuoteStatusMail;
+use App\Mail\QuoteSentMail;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Item;
@@ -19,6 +20,7 @@ use App\Models\QuoteNumberSetting;
 use App\Models\User;
 use App\Services\LogService;
 use App\Services\EmailService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use GeoIp2\WebService\Client;
@@ -27,13 +29,16 @@ use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Crypt;
 
+
 class QuoteController extends Controller
 {
     protected $emailService;
+    protected $notificationService;
 
-    public function __construct(EmailService $emailService)
+    public function __construct(EmailService $emailService, NotificationService $notificationService)
     {
         $this->emailService = $emailService;
+        $this->notificationService = $notificationService;
     }
     
     private function generateNewQuoteNumber()
@@ -58,6 +63,127 @@ class QuoteController extends Controller
 
     public function save_new_quote(Request $request)
     {
+        
+        $uuid = Uuid::uuid7();
+
+        $newQuote = new Quote();
+        $newQuote->unique_id = $uuid->toString();
+        $newQuote->user_id = Auth::id();
+        $newQuote->client_id = $request->client_id;
+        $newQuote->quote_number = $request->quote_id;
+        $newQuote->reference = $request->reference;
+        $newQuote->quote_date = date('Y-m-d', strtotime($request->quote_date));
+        $newQuote->expiry_date = $request->expiry_date ? date('Y-m-d', strtotime($request->expiry_date)) : null;
+        $newQuote->subject = $request->subject;
+        $newQuote->client_notes = $request->notes;
+        $newQuote->discount_type = $request->discount_type;
+        $newQuote->discount_value = $request->discount ?? 0.00;
+        $newQuote->terms_and_conditions = $request->terms_and_conditions;
+        $newQuote->status = "awaiting_review";
+        $newQuote->save();
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $filename = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('quotes/attachments', $filename, 'public');
+
+                $newQuote->attachments()->create([
+                    'file_name' => $filename,
+                    'file_path' => $path,
+                    'file_type' => $file->getClientOriginalExtension(),
+                    'uploaded_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        // Process Items
+        $subtotal = 0;
+        foreach ($request->name as $index => $name) {
+            $quantity = $request->quantity[$index];
+            $price = $request->price[$index];
+            $description = $request->description[$index] ?? '';
+            $total = $quantity * $price;
+            $subtotal += $total;
+
+            $itemId = $request->id[$index] ?? null;
+            $isNew = ($request->is_new[$index] ?? 0) == 1;
+
+            // If new item (no existing ID or flagged as new), create in items table
+            if ($isNew || empty($itemId)) {
+                $newItem = Item::create([
+                    'user_id' => Auth::user()->id,
+                    'name' => $name,
+                    'description' => $description,
+                    'selling_price' => $price,
+                    // Add other fields if your Item model requires (e.g., cost_price => 0, type => 'service')
+                ]);
+                $itemId = $newItem->id;
+            }
+
+            $newQuote->items()->create([
+                'user_id' => Auth::user()->id,
+                'item_id' => $itemId,
+                'item_name' => $name,
+                'description' => $description,
+                'quantity' => $quantity,
+                'price' => $price,
+                'total' => $total,
+            ]);
+        }
+
+        // Discount
+        $discountAmount = 0;
+        if ($request->discount_type === '%') {
+            $discountAmount = ($subtotal * $request->discount / 100);
+        } elseif ($request->discount_type === 'fixed') {
+            $discountAmount = $request->discount;
+        }
+
+        $grandTotal = $subtotal - $discountAmount;
+
+        // Update totals
+        $newQuote->update([
+            'subtotal' => $subtotal,
+            'total_discount' => $discountAmount,
+            'grand_total' => $grandTotal,
+        ]);
+
+        $connection = FreelancerClient::where('freelancer_id', Auth::id())
+                                        ->where('client_id', $request->client_id)
+                                        ->first();
+
+        if (!$connection) {
+            // No connection yet → create as pending
+            $connection = FreelancerClient::create([
+                'freelancer_id' => Auth::id(),
+                'client_id'     => $request->client_id,
+                'status'        => 'pending',
+                'connected_at'  => null,
+            ]);
+        } 
+
+        // Send Email
+        Mail::to($newQuote->client->email)->send(new QuoteSentMail($newQuote));
+
+        // Logging
+        $log_title = "Quote Added";
+        $log_text = "New Quote: $newQuote->quote_number created for $$grandTotal";
+        $log = new LogService();
+        $log->addLog($request->client_id, 'quote', $newQuote->id, 'log', $log_title, $log_text, '');
+
+        $this->notificationService->createNotification(
+            $request->client_id,
+            auth()->user()->id,
+            'quote_created',
+            'New Quote Received',
+            'A new quote (#' . $newQuote->quote_number . ') has been created for you by ' . auth()->user()->name,
+            route('client.quote.view', $newQuote->id)
+        );
+        return redirect()->route('freelancer.quotes')->with('success', 'Quote Saved Successfully');
+    }
+
+    public function save_new_quote_old(Request $request)
+    {
         $uuid = Uuid::uuid7();
 
         $newQuote = new Quote();
@@ -73,7 +199,7 @@ class QuoteController extends Controller
         $newQuote->discount_type = $request->discount_type;
         $newQuote->discount_value = $request->discount ?? 0.00;
         $newQuote->terms_and_conditions = $request->terms_and_conditions;
-        $newQuote->status = "Draft";
+        $newQuote->status = "awaiting_review";
         $newQuote->save();
 
         if ($request->hasFile('attachments')) {
@@ -143,11 +269,23 @@ class QuoteController extends Controller
             ]);
         } 
 
+        // Send Email
+        Mail::to($newQuote->client->email)->send(new QuoteSentMail($newQuote));
+
         // Logging
-        $log_title = "Quote Added";
-        $log_text = "New Quote: $newQuote->quote_id created for $$grandTotal";
+        $log_title = "Quote Updated";
+        $log_text = "Quote: $newQuote->quote_number updated for $$grandTotal";
         $log = new LogService();
         $log->addLog($request->client_id, 'quote', $newQuote->id, 'log', $log_title, $log_text, '');
+
+        $this->notificationService->createNotification(
+            $request->client_id,                
+            auth()->id(),                        
+            'quote_updated',                     
+            'Quote Updated',                    
+            'A quote (#' . $newQuote->quote_number . ') has been updated by ' . auth()->user()->name . '.',
+            route('client.quote.view', $newQuote->id)
+        );
 
         return redirect()->route('freelancer.quotes')->with('success', 'Quote Saved Successfully');
     }
@@ -188,7 +326,7 @@ class QuoteController extends Controller
         $updateQuote->discount_type       = $request->discount_type;
         $updateQuote->discount_value      = $request->discount_value;
         $updateQuote->terms_and_conditions = $request->terms_and_conditions;
-        $updateQuote->status              = "Draft";
+        $updateQuote->status              = "awaiting_review";
         $updateQuote->save();
 
         // Remove all existing items
@@ -250,16 +388,25 @@ class QuoteController extends Controller
 
         // Logging
         $log_title = "Quote Updated";
-        $log_text  = "Quote: $updateQuote->quote_id Updated";
+        $log_text  = "Quote: $updateQuote->quote_number Updated";
         $log = new LogService();
         $log->addLog(
-            $request->customer_id,
+            $request->client_id,
             'quote',
             $updateQuote->id,
             'log',
             $log_title,
             $log_text,
             User::class
+        );
+
+        $this->notificationService->createNotification(
+            $request->client_id,                
+            auth()->id(),                        
+            'quote_updated',                     
+            'Quote Updated',                    
+            'A quote (#' . $updateQuote->quote_number . ') has been updated by ' . auth()->user()->name . '.',
+            route('client.quote.view', $updateQuote->id)
         );
 
         return redirect()->route('freelancer.quotes')->with('success', 'Quote Updated Successfully');
@@ -298,10 +445,21 @@ class QuoteController extends Controller
     public function add_comment(Request $request)
     {
         $quote_id = $request->quote_id;
-        $customer_id = $request->customer_id;
+        $client_id = $request->client_id;
         $comment = $request->comment;
         $newComment = new LogService();
-        $newComment->addLog($customer_id, 'quote', $quote_id, 'comment', '', $comment,User::class);
+        $newComment->addLog($client_id, 'quote', $quote_id, 'comment', 'Freelancer Comment', $comment,User::class);
+        $quote = Quote::find($quote_id);
+        // Create in-app notification for the client
+        $this->notificationService->createNotification(
+            $client_id, 
+            auth()->id(),
+            'freelancer_comment',
+            'New Comment from ' . auth()->user()->name,
+            'Freelancer ' . auth()->user()->name . ' commented on Quote #' . $quote->quote_number . ': "' . $request->message . '"',
+            route('client.quote.view', $quote->id)
+        );
+
         $quote_comments_logs = LogsComment::where('action_id', $quote_id)->where('action_type', 'quote')->orderBy('created_at', 'DESC')->get();
         $comments_blade = view('freelancer.quote.ajax_views.comments', compact('quote_comments_logs'))->render();
         return response()->json(['all_comments' => $comments_blade]);
@@ -350,6 +508,19 @@ class QuoteController extends Controller
                 'uploaded_by' => auth()->id(),
             ]);
         }
+
+        $this->notificationService->createNotification(
+            $quote->client_id,
+            auth()->id(),  
+            'attachment_uploaded',
+            'New Attachment Uploaded',
+            'Freelancer ' . auth()->user()->name . ' uploaded new attachment(s) for Quote #' . $quote->quote_number . '.',
+            route('client.quote.view', $quote->id)
+        );
+
+        $newComment = new LogService();
+        $message  = 'Freelancer ' . auth()->user()->name . ' uploaded new attachment(s) for Quote #' . $quote->quote_number;
+        $newComment->addLog($quote->client_id, 'quote', $quote->id, 'log', 'New Attachment Uploaded', $message,User::class);
 
         return response()->json(['success' => true]);
     }
@@ -446,6 +617,23 @@ class QuoteController extends Controller
                 $performerType =  User::class;
                 $log->addLog($quote->client_id,'quote',$quote_id,'log',$log_title,$log_text,$performerType);
 
+                $this->notificationService->createNotification(
+                    $quote->client_id,
+                    auth()->id(),  
+                    'converted_to_invoice',
+                    'Quote Converted To Invoice',
+                    'This Quote: '.$quote->quote_number.' has been converted to invoice and the total is : $'.$quote->grand_total.'.',
+                    route('client.quote.view', $quote->id)
+                );
+                // Notification for freelancer
+                $this->notificationService->createNotification(
+                    $quote->user_id,
+                    auth()->id(),  
+                    'converted_to_invoice',
+                    'Quote Converted To Invoice',
+                    'This Quote: '.$quote->quote_number.' has been converted to invoice and the total is : $'.$quote->grand_total.'.',
+                    route('freelancer.quote.view_quote', $quote->id)
+                );
                 return redirect()->back()->with('success', 'This quote has been converted to invoice successfully');
             }
         }
@@ -505,12 +693,12 @@ class QuoteController extends Controller
     {
         try {
             $quoteId = Crypt::decryptString($hash);
-            $quote = Quote::findOrFail($quoteId);
+            $quote = Quote::find($quoteId);
 
-            // if ($quote->status === 'Accepted') {
-            //     return redirect()->route('quotes.status', $hash)
-            //         ->with('info', 'This quote has already been accepted.');
-            // }
+            if ($quote->status === 'Accepted') {
+                return redirect()->route('quotes.status', $hash)
+                    ->with('info', 'This quote has already been accepted.');
+            }
 
             $quote->status = 'Accepted';
             $quote->save();
@@ -534,6 +722,27 @@ class QuoteController extends Controller
 
             $freelancer = $quote->freelancer;
             Mail::to($freelancer->email)->send(new QuoteStatusMail($quote, 'accepted'));
+
+            $logService = new LogService();
+            $message = 'Quote #' . $quote->id . ' status changed from "' . $quote->status . '" to Accepted by ' . $quote->client->name;
+            $logService->addLog(
+                $quote->client_id,           
+                'quote',                     
+                $quote->id,                  
+                'log',                       
+                'Quote Status Updated',      
+                $message,                    
+                User::class                  
+            );
+
+            $this->notificationService->createNotification(
+                $quote->user_id,               
+                auth()->id(),                    
+                'quote_status_updated',          
+                'Quote Status Updated',          
+                'Quote #' . $quote->id . ' status has been updated to Accepted by ' . $quote->client->name,
+                route('client.quote.view', $quote->id)
+            );
 
             return redirect()->route('quotes.status', $hash)
                 ->with('success', 'Thank you! You have accepted the quote.');
@@ -559,6 +768,27 @@ class QuoteController extends Controller
 
             $freelancer = $quote->freelancer; 
             Mail::to($freelancer->email)->send(new QuoteStatusMail($quote, 'rejected'));
+
+            $logService = new LogService();
+            $message = 'Quote #' . $quote->id . ' status changed from "' . $quote->status . '" to Rejected by ' . $quote->client->name;
+            $logService->addLog(
+                $quote->client_id,           
+                'quote',                     
+                $quote->id,                  
+                'log',                       
+                'Quote Status Updated',      
+                $message,                    
+                User::class                  
+            );
+
+            $this->notificationService->createNotification(
+                $quote->user_id,               
+                auth()->id(),                    
+                'quote_status_updated',          
+                'Quote Status Updated',          
+                'Quote #' . $quote->id . ' status has been updated to Rejected by ' . $quote->client->name,
+                route('client.quote.view', $quote->id)
+            );
 
             return redirect()->route('quotes.status', $hash)
                 ->with('success', 'You have rejected the quote. If you change your mind, please contact us.');

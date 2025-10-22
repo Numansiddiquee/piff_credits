@@ -38,4 +38,14 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoiceAttachment::class);
     }
+
+    public function writeOff()
+    {
+        return $this->hasOne(WriteOff::class);
+    }
+
+    public function getIsWrittenOffAttribute()
+    {
+        return $this->writeOff()->exists();
+    }
 }

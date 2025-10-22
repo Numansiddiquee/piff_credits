@@ -53,19 +53,18 @@
                         <th class="min-w-150px">Invoice #</th>
                         <th class="min-w-150px">Client Name</th>
                         <th class="min-w-150px">Freelancer Name</th>
-                        <th class="min-w-120px">Status</th>
                         <th class="min-w-150px">Invoice Date</th>
-                        <th class="min-w-150px">Due Date</th>
+                        <th class="min-w-120px">Due Date</th>
+                        <th class="min-w-120px">Status</th>
                         <th class="min-w-100px text-end">Amount</th>
                         <th class="min-w-100px text-end">Balance Due</th>
-                        <th class="min-w-100px text-end">Action</th>
                     </tr>
                     </thead>
                     <!--end::Table head-->
                     <!--begin::Table body-->
                     <tbody>
                     @forelse ($invoices as $invoice)
-                        <tr class="clickable_table_row" data-href="{{ route('admin.invoice.show',$invoice->id) }}">
+                        <tr class="clickable_table_row" data-href="{{ route('admin.invoice.view',$invoice->id) }}">
                             <td>
                                 <div class="form-check form-check-sm form-check-custom form-check-solid">
                                     <input class="form-check-input widget-13-check" type="checkbox" value="{{ $invoice->id }}">
@@ -75,17 +74,18 @@
                                 <span class="text-gray-600 fs-6">{{ $invoice->invoice_number }}</span>
                             </td>
                             <td>
-                                <span class="text-gray-600 fs-6">{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</span>
+                                <span class="text-gray-600 fs-6">{{ $invoice->client->name ?? '-'}}</span>
                             </td>
                             <td>
-                                <span class="text-gray-600 fs-6">{{ $invoice->freelancer->first_name }} {{ $invoice->freelancer->last_name }}</span>
+                                <span class="text-gray-600 fs-6">{{ $invoice->freelancer->name ?? '-' }}</span>
                             </td>
 
                             <td>
-                                <span class="text-gray-600 fs-6">{{ $invoice->status }}</span>
-                            </td>
-                            <td>
                                 <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M Y') }}</span>
+                            </td>
+                            
+                            <td>
+                                <span class="text-gray-600 fs-6">{{ $invoice->due_date->format('d M, Y') }}</span>
                             </td>
                             <td>
                                 @php
@@ -118,11 +118,6 @@
                             </td>
                             <td class="text-gray-600 fs-6 text-end">
                                 ${{ number_format($invoice->due, 2) }}
-                            </td>
-                            <td class="text-gray-600 fs-6 text-end">
-                                <a href="{{ route('admin.invoice.edit',$invoice->id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
-                                    <i class="ki-outline ki-pencil fs-2"></i>
-                                </a>
                             </td>
                         </tr>
                     @empty

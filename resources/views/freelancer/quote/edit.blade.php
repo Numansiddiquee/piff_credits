@@ -428,6 +428,10 @@
             document.getElementById('itemTableBody').appendChild(template);
         }
 
+        function addNewItem() {
+            window.location.href = "{{ route('freelancer.item.create') }}"
+        }
+
         function removeItem(button) {
             const row = button.closest('tr');
             row.remove();

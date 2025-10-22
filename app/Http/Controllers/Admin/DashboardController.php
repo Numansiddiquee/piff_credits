@@ -20,19 +20,19 @@ class DashboardController extends Controller
 
     public function items()
     {
-        $items = Item::where('company_id',Auth::user()->company_id)->get();
+        $items = Item::with('createdBy')->get();
         return view('admin.items')->with(compact('items'));
     }
 
     public function quotes()
     {
-        $quotes = Quote::where('company_id', Auth::user()->company_id)->with('client','freelancer')->get();
+        $quotes = Quote::with('client','freelancer')->get();
         return view('admin.quotes')->with(compact('quotes'));
     }
 
     public function invoices()
     {
-        $invoices  = Invoice::with('client','freelancer')->where('company_id',Auth::user()->company_id)->get();
+        $invoices  = Invoice::with('client','freelancer')->get();
         return view('admin.invoices')->with(compact('invoices'));
     }
 
@@ -43,7 +43,7 @@ class DashboardController extends Controller
 
     public function users()
     {
-        $users = User::paginate(15);
+        $users = User::paginate(10);
         return view('admin.users')->with(compact('users'));
     }
 

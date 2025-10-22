@@ -82,31 +82,32 @@
 	                            <td>
 	                                <span class="text-gray-600 fs-6">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d M, Y') }}</span>
 	                            </td>
-	                            <td>
+	                            <td> 
 	                                @php
-	                                    if($invoice->status == 'Paid'){
-	                                        $status = 'Paid';
-	                                    }else{
-	                                        $dueDate = \Carbon\Carbon::parse($invoice->due_date);
-	                                        $today = \Carbon\Carbon::today();
-	                                        $status = '';
-	                                        $overdueDays = 0;
-	                                        $paid  =  'no';
-	                                        if ($dueDate->isPast() && $paid == 'no') {
-	                                            $status = 'Overdue';
-	                                            $overdueDays = $dueDate->diffInDays($today);
-	                                        } elseif ($dueDate->diffInDays($today) <= 6 && $paid == 'no') {
-	                                            $status = 'Due Soon';
-	                                        } elseif($paid == 'no'){
-	                                            $status = 'Unpaid';
-	                                        }else{
-	                                            $status = 'Paid';
-	                                        }
-	                                    }
-	                                @endphp
-	                                <span class="badge @if($status == 'Overdue') badge-danger @elseif($status == 'Due Soon' || $status == 'Unpaid' ) badge-warning  @else badge-success @endif">
-	                                    {{ $status ==  "Overdue" ? $status.' by '.$overdueDays.'Days' : $status}}
-	                                </span>
+									   
+									    $due = \Carbon\Carbon::parse($invoice->due_date);
+									    $today = \Carbon\Carbon::today();
+									    $status = ucfirst(strtolower($invoice->status));
+									    $overdueDays = 0;
+
+									    if (!in_array($status, ['Paid', 'Written off'])) {
+									        if ($due->isPast()) {
+									            $status = 'Overdue';
+									            $overdueDays = $due->diffInDays($today);
+									        } elseif ($due->diffInDays($today) <= 6) {
+									            $status = 'Due Soon';
+									        } else {
+									            $status = 'Unpaid';
+									        }
+									    }
+									@endphp
+
+									<span class="badge 
+									    {{ $status === 'Overdue' ? 'badge-danger' : 
+									       ($status === 'Due Soon' || $status === 'Unpaid' ? 'badge-warning' : 
+									       ($status === 'Written off' ? 'badge-secondary' : 'badge-success')) }}">
+									    {{ $status === 'Overdue' ? "$status by $overdueDays days" : $status }}
+									</span>
 	                            </td>
 	                            <td class="text-gray-600 fs-6 text-end">
 	                                ${{ number_format($invoice->total, 2) }}
@@ -115,7 +116,7 @@
 	                                ${{ number_format($invoice->due, 2) }}
 	                            </td>
 	                            <td class="text-gray-600 fs-6 text-end">
-	                                <a href="{{ route('freelancer.invoice.edit',$invoice->id) }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+	                                <a href="{{ in_array(strtolower($invoice->status), ['draft', 'sent']) ? route('freelancer.invoice.edit', $invoice->id) : '#' }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
 	                                    <i class="ki-outline ki-pencil fs-2"></i>
 	                                </a>
 	                            </td>
